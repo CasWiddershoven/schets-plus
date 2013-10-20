@@ -5,50 +5,56 @@ using System.Windows.Forms;
 
 namespace SchetsEditor
 {
-    public class SchetsControl : UserControl
+    class SchetsControl : UserControl
     {
+        /// <summary>The canvas that we're drawing on</summary>
         private Schets schets;
         private Color penkleur;
 
-        public Color PenKleur 
-        {   get { return penkleur; } 
+        /// <summary>Property to get the canvas</summary>
+        public Schets Schets { get { return schets; } }
+
+        public Color PenKleur
+        {
+            get { return penkleur; }
         }
         public SchetsControl()
-        {   this.BorderStyle = BorderStyle.Fixed3D;
+        {
+            this.BorderStyle = BorderStyle.Fixed3D;
+            this.BackColor = Color.White;
             this.schets = new Schets();
             this.Paint += this.teken;
             this.Resize += this.veranderAfmeting;
+            this.DoubleBuffered = true;
             this.veranderAfmeting(null, null);
         }
-        protected override void OnPaintBackground(PaintEventArgs e)
-        {
-        }
         private void teken(object o, PaintEventArgs pea)
-        {   schets.Teken(pea.Graphics);
+        {
+            schets.Teken(pea.Graphics);
         }
         private void veranderAfmeting(object o, EventArgs ea)
-        {   schets.VeranderAfmeting(this.ClientSize);
+        {
+            schets.VeranderAfmeting(this.ClientSize);
             this.Invalidate();
         }
-        public Graphics MaakBitmapGraphics()
-        {   Graphics g = schets.BitmapGraphics;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
-            return g;
-        }
         public void Schoon(object o, EventArgs ea)
-        {   schets.Schoon();
+        {
+            schets.Schoon();
             this.Invalidate();
         }
         public void Roteer(object o, EventArgs ea)
-        {   schets.Roteer();
+        {
+            schets.Roteer();
             this.veranderAfmeting(o, ea);
         }
         public void VeranderKleur(object obj, EventArgs ea)
-        {   string kleurNaam = ((ComboBox)obj).Text;
+        {
+            string kleurNaam = ((ComboBox) obj).Text;
             penkleur = Color.FromName(kleurNaam);
         }
         public void VeranderKleurViaMenu(object obj, EventArgs ea)
-        {   string kleurNaam = ((ToolStripMenuItem)obj).Text;
+        {
+            string kleurNaam = ((ToolStripMenuItem) obj).Text;
             penkleur = Color.FromName(kleurNaam);
         }
     }

@@ -4,132 +4,171 @@ using System.Drawing.Drawing2D;
 
 namespace SchetsEditor
 {
-    public interface ISchetsTool
+    interface ISchetsTool
     {
+        /// <summary>Called when the mouse button is pressed</summary>
+        /// <param name="s">The SchetsControls that the button is pressed on</param>
+        /// <param name="p">The location of the cursor</param>
         void MuisVast(SchetsControl s, Point p);
+
+        /// <summary>Called when the mouse is dragging (with the mouse button down)</summary>
+        /// <param name="s">The SchetsControls that the button is being dragged on</param>
+        /// <param name="p">The location of the cursor</param>
         void MuisDrag(SchetsControl s, Point p);
+
+        /// <summary>Called when the mouse button is released</summary>
+        /// <param name="s">The SchetsControls that the button is released from</param>
+        /// <param name="p">The location of the cursor</param>
         void MuisLos(SchetsControl s, Point p);
+
+        /// <summary>Called when a key is pressed</summary>
+        /// <param name="s">The SchetsControls that the key is pressed on</param>
+        /// <param name="c">The key that is pressed</param>
         void Letter(SchetsControl s, char c);
     }
 
-    public abstract class StartpuntTool : ISchetsTool
+    abstract class StartpuntTool : ISchetsTool
     {
+        /// <summary>The point where this tool started editting</summary>
         protected Point startpunt;
-        protected Brush kwast;
+        /// <summary>The color that is to be used with this tool</summary>
+        protected Color color;
+        /// <summary>The index of the layer we're currently editting (or -1 if we're not editting a layer)</summary>
+        protected int edittingLayer = -1;
 
         public virtual void MuisVast(SchetsControl s, Point p)
-        {   startpunt = p;
+        {
+            color = s.PenKleur;
+            startpunt = p;
+            edittingLayer = -1;
         }
-        public virtual void MuisLos(SchetsControl s, Point p)
-        {   kwast = new SolidBrush(s.PenKleur);
-        }
+        public abstract void MuisLos(SchetsControl s, Point p);
         public abstract void MuisDrag(SchetsControl s, Point p);
         public abstract void Letter(SchetsControl s, char c);
     }
 
-    public class TekstTool : StartpuntTool
+    class TekstTool : StartpuntTool
     {
         public override string ToString() { return "tekst"; }
 
+        public override void MuisLos(SchetsControl s, Point p) { }
         public override void MuisDrag(SchetsControl s, Point p) { }
 
         public override void Letter(SchetsControl s, char c)
         {
             if (c >= 32)
             {
-                Graphics gr = s.MaakBitmapGraphics();
-                Font font = new Font("Tahoma", 40);
-                string tekst = c.ToString();
-                SizeF sz = 
-                gr.MeasureString(tekst, font, this.startpunt, StringFormat.GenericTypographic);
-                gr.DrawString   (tekst, font, kwast, 
-                                              this.startpunt, StringFormat.GenericTypographic);
-                // gr.DrawRectangle(Pens.Black, startpunt.X, startpunt.Y, sz.Width, sz.Height);
-                startpunt.X += (int)sz.Width;
+                if(edittingLayer == -1)
+                {
+                    s.Schets.Layers.Add(new LayerText(this.startpunt, color, new String(c, 1)));
+                    edittingLayer = s.Schets.Layers.Count - 1;
+                }
+                else
+                    ((LayerText) s.Schets.Layers[edittingLayer]).Text += c;
                 s.Invalidate();
             }
         }
     }
 
-    public abstract class TweepuntTool : StartpuntTool
+    abstract class TweepuntTool : StartpuntTool
     {
         public static Rectangle Punten2Rechthoek(Point p1, Point p2)
-        {   return new Rectangle( new Point(Math.Min(p1.X,p2.X), Math.Min(p1.Y,p2.Y))
-                                , new Size (Math.Abs(p1.X-p2.X), Math.Abs(p1.Y-p2.Y))
-                                );
+        {
+            return new Rectangle(
+                new Point(Math.Min(p1.X, p2.X), Math.Min(p1.Y, p2.Y)),
+                new Size(Math.Abs(p1.X - p2.X), Math.Abs(p1.Y - p2.Y)) );
         }
-        public static Pen MaakPen(Brush b, int dikte)
-        {   Pen pen = new Pen(b, dikte);
-            pen.StartCap = LineCap.Round;
-            pen.EndCap = LineCap.Round;
-            return pen;
-        }
-        public override void MuisVast(SchetsControl s, Point p)
-        {   base.MuisVast(s, p);
-            kwast = Brushes.Gray;
-        }
+
         public override void MuisDrag(SchetsControl s, Point p)
-        {   s.Refresh();
-            this.Bezig(s.CreateGraphics(), this.startpunt, p);
-        }
+        { Bezig(s, startpunt, p); }
+
         public override void MuisLos(SchetsControl s, Point p)
-        {   base.MuisLos(s, p);
-            this.Compleet(s.MaakBitmapGraphics(), this.startpunt, p);
+        { Compleet(s, startpunt, p); }
+
+        // Ignore any key presses
+        public override void Letter(SchetsControl s, char c){ }
+
+        /// <summary>Called when a new layer should be created</summary>
+        /// <param name="p1">The first point/location of the layer</param>
+        /// <param name="p2">The second point/location of the layer</param>
+        /// <returns>The created layer</returns>
+        public abstract LayerTwoPoint CreateLayer(Point p1, Point p2);
+
+        /// <summary>Called when the tool is busy drawing the layer</summary>
+        /// <param name="s">The SchetsControl that the layer should be added to</param>
+        /// <param name="p1">The first point/location of the layer</param>
+        /// <param name="p2">The second point/location of the layer</param>
+        public virtual void Bezig(SchetsControl s, Point p1, Point p2)
+        {
+            if(edittingLayer == -1)
+            {
+                s.Schets.Layers.Add(CreateLayer(p1, p2));
+                edittingLayer = s.Schets.Layers.Count - 1;
+            }
+            else
+                ((LayerTwoPoint) s.Schets.Layers[edittingLayer]).SecondLocation = p2;
             s.Invalidate();
         }
-        public override void Letter(SchetsControl s, char c)
-        {
-        }
-        public abstract void Bezig(Graphics g, Point p1, Point p2);
-        
-        public virtual void Compleet(Graphics g, Point p1, Point p2)
-        {   this.Bezig(g, p1, p2);
-        }
+
+        /// <summary>Called when the tool is done drawing the layer</summary>
+        /// <param name="s">The SchetsControl that the layer should be added to</param>
+        /// <param name="p1">The first point/location of the layer</param>
+        /// <param name="p2">The second point/location of the layer</param>
+        public virtual void Compleet(SchetsControl s, Point p1, Point p2)
+        { Bezig(s, p1, p2); }
     }
 
-    public class RechthoekTool : TweepuntTool
+    class RechthoekTool : TweepuntTool
     {
         public override string ToString() { return "kader"; }
 
-        public override void Bezig(Graphics g, Point p1, Point p2)
-        {   g.DrawRectangle(MaakPen(kwast,3), TweepuntTool.Punten2Rechthoek(p1, p2));
-        }
+        public override LayerTwoPoint CreateLayer(Point p1, Point p2)
+        { return new LayerRectOpen(p1, p2, color); }
     }
     
-    public class VolRechthoekTool : RechthoekTool
+    class VolRechthoekTool : RechthoekTool
     {
         public override string ToString() { return "vlak"; }
 
-        public override void Compleet(Graphics g, Point p1, Point p2)
-        {   g.FillRectangle(kwast, TweepuntTool.Punten2Rechthoek(p1, p2));
-        }
+        public override LayerTwoPoint CreateLayer(Point p1, Point p2)
+        { return new LayerRectFilled(p1, p2, color); }
     }
 
-    public class LijnTool : TweepuntTool
+    class LijnTool : TweepuntTool
     {
         public override string ToString() { return "lijn"; }
 
-        public override void Bezig(Graphics g, Point p1, Point p2)
-        {   g.DrawLine(MaakPen(this.kwast,3), p1.X, p1.Y, p2.X, p2.Y);
-        }
+        public override LayerTwoPoint CreateLayer(Point p1, Point p2)
+        { return new LayerLine(p1, p2, color); }
     }
 
-    public class PenTool : LijnTool
+    class PenTool : StartpuntTool
     {
         public override string ToString() { return "pen"; }
 
         public override void MuisDrag(SchetsControl s, Point p)
-        {   this.MuisLos(s, p);
-            this.MuisVast(s, p);
+        {
+            if(edittingLayer == -1)
+            {
+                LayerPath layerPath = new LayerPath(startpunt, color);
+                layerPath.Points.Add(p);
+                s.Schets.Layers.Add(layerPath);
+                edittingLayer = s.Schets.Layers.Count - 1;
+            }
+            else
+                ((LayerPath) s.Schets.Layers[edittingLayer]).Points.Add(p);
+            s.Invalidate();
         }
+
+        // Ignore mouse release events
+        public override void MuisLos(SchetsControl s, Point p) { }
+
+        // Ignore any key presses
+        public override void Letter(SchetsControl s, char c) { }
     }
     
-    public class GumTool : PenTool
+    class GumTool : PenTool
     {
         public override string ToString() { return "gum"; }
-
-        public override void Bezig(Graphics g, Point p1, Point p2)
-        {   g.DrawLine(MaakPen(Brushes.White, 7), p1.X, p1.Y, p2.X, p2.Y);
-        }
     }
 }

@@ -6,41 +6,37 @@ namespace SchetsEditor
 {
     class Schets
     {
-        private Bitmap bitmap;
+        /// <summary>The layers that form the image</summary>
+        private List<Layer> layers = new List<Layer>();
+
+        /// <summary>Property to get the layers</summary>
+        public List<Layer> Layers { get { return layers; } }
         
-        public Schets()
-        {
-            bitmap = new Bitmap(1, 1);
-        }
-        public Graphics BitmapGraphics
-        {
-            get { return Graphics.FromImage(bitmap); }
-        }
+        /// <summary>Resize the canvas</summary>
+        /// <param name="sz">New canvas size</param>
         public void VeranderAfmeting(Size sz)
         {
-            if (sz.Width > bitmap.Size.Width || sz.Height > bitmap.Size.Height)
-            {
-                Bitmap nieuw = new Bitmap( Math.Max(sz.Width,  bitmap.Size.Width)
-                                         , Math.Max(sz.Height, bitmap.Size.Height)
-                                         );
-                Graphics gr = Graphics.FromImage(nieuw);
-                gr.FillRectangle(Brushes.White, 0, 0, sz.Width, sz.Height);
-                gr.DrawImage(bitmap, 0, 0);
-                bitmap = nieuw;
-            }
+            // Implement me
         }
+
+        /// <summary>Draw the image</summary>
+        /// <param name="gr">The graphics object that is to be used to draw the image</param>
         public void Teken(Graphics gr)
         {
-            gr.DrawImage(bitmap, 0, 0);
+            foreach(Layer layer in layers)
+                layer.Draw(gr);
         }
+
+        /// <summary>Clear the canvas</summary>
         public void Schoon()
         {
-            Graphics gr = Graphics.FromImage(bitmap);
-            gr.FillRectangle(Brushes.White, 0, 0, bitmap.Width, bitmap.Height);
+            layers.Clear();
         }
+
+        /// <summary>Rotate the canvas</summary>
         public void Roteer()
         {
-            bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+            // Implement me
         }
     }
 }
