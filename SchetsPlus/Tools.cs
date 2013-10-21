@@ -60,8 +60,10 @@ namespace SchetsEditor
             {
                 if(edittingLayer == -1)
                 {
-                    s.Schets.Layers.Add(new LayerText(this.startpunt, color, new String(c, 1)));
+                    LayerText layer = new LayerText(this.startpunt, color, new String(c, 1));
+                    s.Schets.Layers.Add(layer);
                     edittingLayer = s.Schets.Layers.Count - 1;
+                    s.CommitAction(new SchetsActionAddLayer(layer));
                 }
                 else
                     ((LayerText) s.Schets.Layers[edittingLayer]).Text += c;
@@ -115,7 +117,10 @@ namespace SchetsEditor
         /// <param name="p1">The first point/location of the layer</param>
         /// <param name="p2">The second point/location of the layer</param>
         public virtual void Compleet(SchetsControl s, Point p1, Point p2)
-        { Bezig(s, p1, p2); }
+        {
+            Bezig(s, p1, p2);
+            s.CommitAction(new SchetsActionAddLayer(s.Schets.Layers[edittingLayer]));
+        }
     }
 
     class RechthoekTool : TweepuntTool
@@ -160,8 +165,9 @@ namespace SchetsEditor
             s.Invalidate();
         }
 
-        // Ignore mouse release events
-        public override void MuisLos(SchetsControl s, Point p) { }
+        // Commit the action on a mouse release event
+        public override void MuisLos(SchetsControl s, Point p)
+        { s.CommitAction(new SchetsActionAddLayer(s.Schets.Layers[edittingLayer])); }
 
         // Ignore any key presses
         public override void Letter(SchetsControl s, char c) { }

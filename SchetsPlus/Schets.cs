@@ -11,13 +11,6 @@ namespace SchetsEditor
 
         /// <summary>Property to get the layers</summary>
         public List<Layer> Layers { get { return layers; } }
-        
-        /// <summary>Resize the canvas</summary>
-        /// <param name="sz">New canvas size</param>
-        public void VeranderAfmeting(Size sz)
-        {
-            // Implement me
-        }
 
         /// <summary>Draw the image</summary>
         /// <param name="gr">The graphics object that is to be used to draw the image</param>
