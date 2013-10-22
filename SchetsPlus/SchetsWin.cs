@@ -14,10 +14,12 @@ namespace SchetsEditor
         ISchetsTool huidigeTool;
         Panel paneel;
         bool vast;
-        ResourceManager resourcemanager
-            = new ResourceManager("SchetsEditor.Properties.Resources"
-                                 , Assembly.GetExecutingAssembly()
-                                 );
+        ResourceManager resourcemanager = new ResourceManager("SchetsEditor.Properties.Resources", Assembly.GetExecutingAssembly());
+
+        /// <summary>The undo button</summary>
+        Button buttonUndo;
+        /// <summary>The redo button</summary>
+        Button buttonRedo;
 
         private void veranderAfmeting(object o, EventArgs ea)
         {
@@ -184,17 +186,60 @@ namespace SchetsEditor
             paneel.Controls.Add(cbb);
 
             // Create the undo and redo buttons
-            Button undo = new Button();
-            undo.Text = "Undo";
-            undo.Location = new Point(400, 0);
-            undo.Click += (object o, EventArgs ea) => { schetscontrol.Undo(); };
-            paneel.Controls.Add(undo);
+            buttonUndo = new Button();
+            buttonUndo.Text = "Undo";
+            buttonUndo.Location = new Point(400, 0);
+            buttonUndo.Click += (object o, EventArgs ea) => { callUndo(); };
+            buttonUndo.Enabled = false;
+            paneel.Controls.Add(buttonUndo);
 
-            Button redo = new Button();
-            redo.Text = "Redo";
-            redo.Location = new Point(490, 0);
-            redo.Click += (object o, EventArgs ea) => { schetscontrol.Redo(); };
-            paneel.Controls.Add(redo);
+            buttonRedo = new Button();
+            buttonRedo.Text = "Redo";
+            buttonRedo.Location = new Point(490, 0);
+            buttonRedo.Click += (object o, EventArgs ea) => { callRedo(); };
+            buttonRedo.Enabled = false;
+            paneel.Controls.Add(buttonRedo);
+
+            schetscontrol.CanUndoRedo += (bool canUndo, bool canRedo) =>
+                {
+                    buttonUndo.Enabled = canUndo;
+                    buttonRedo.Enabled = canRedo;
+                };
+        }
+
+        /// <summary>Calls the Undo() method on the SchetsControl</summary>
+        private void callUndo()
+        {
+            // Do no undo / redo if we're currently editting a layer
+            if(!huidigeTool.IsEditting())
+                schetscontrol.Undo();
+        }
+
+        /// <summary>Calls the Redo() method on the SchetsControl</summary>
+        private void callRedo()
+        {
+            // Do no undo / redo if we're currently editting a layer
+            if(!huidigeTool.IsEditting())
+                schetscontrol.Redo();
+        }
+
+        // Override ProcessCmdKey to enable shortcut keys (like Ctrl+Z)
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            // Handle the shortcut keys
+            if(keyData == (Keys.Control | Keys.Z))
+            {
+                callUndo();
+                return true;
+            }
+            else if(keyData == (Keys.Control | Keys.Y))
+            {
+                callRedo();
+                return true;
+            }
+
+            // No shortcut found, so we call the parent's handler
+            return base.ProcessCmdKey(ref msg, keyData);
         }
     }
 }

@@ -67,11 +67,25 @@ namespace SchetsEditor
             set { text = value; }
         }
 
+        /// <summary>Whether or not the layer is currently being editted</summary>
+        protected bool editting = false;
+        /// <summary>Property to set or get whether the layer is currently being editted</summary>
+        public bool Editting
+        {
+            get { return editting; }
+            set { editting = value; }
+        }
+
         /// <summary>Draws the layer</summary>
         /// <param name="g">The graphics object that is to be used to draw the layer</param>
         public override void Draw(Graphics g)
         {
             Font font = new Font("Tahoma", 40);
+            if(editting)
+            {
+                SizeF textSize = g.MeasureString(text, font);
+                g.DrawRectangle(new Pen(Color.Gray, 3), location.X, location.Y, textSize.Width, textSize.Height);
+            }
             g.DrawString(text, font, new SolidBrush(color), location);
         }
     }

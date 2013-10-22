@@ -69,6 +69,9 @@ namespace SchetsEditor
             // Add the action
             actions.Add(action);
             actionPos = actions.Count - 1;
+
+            // Trigger the CanUndoRedo event
+            callCanUndoRedo();
         }
 
         /// <summary>Undo the last action</summary>
@@ -78,6 +81,7 @@ namespace SchetsEditor
             if(actionPos >= 0)
             {
                 actions[actionPos--].Undo(this);
+                callCanUndoRedo();
                 Invalidate();
             }
             return actionPos >= 0;
@@ -90,9 +94,25 @@ namespace SchetsEditor
             if(actionPos + 1 < actions.Count)
             {
                 actions[++actionPos].Redo(this);
+                callCanUndoRedo();
                 Invalidate();
             }
             return actionPos + 1 < actions.Count;
+        }
+
+        /// <summary>The handler for the CanUndoRedo event</summary>
+        /// <param name="canUndo">Whether there are actions that can be undone</param>
+        /// <param name="canRedo">Whether there are actions that can be redone</param>
+        public delegate void CanUndoRedoHandler(bool canUndo, bool canRedo);
+
+        /// <summary>The CanUndoRedo event, called when a situation changes in whether there actions that can be undone/redone</summary>
+        public event CanUndoRedoHandler CanUndoRedo;
+        
+        /// <summary>Trigger the CanUndoRedo event</summary>
+        private void callCanUndoRedo()
+        {
+            if(CanUndoRedo != null)
+                CanUndoRedo(actionPos >= 0, actionPos + 1 < actions.Count);
         }
     }
 }

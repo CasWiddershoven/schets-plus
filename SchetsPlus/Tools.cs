@@ -25,6 +25,10 @@ namespace SchetsEditor
         /// <param name="s">The SchetsControls that the key is pressed on</param>
         /// <param name="c">The key that is pressed</param>
         void Letter(SchetsControl s, char c);
+
+        /// <summary>Whether or not the tool is currently editting a layer</summary>
+        /// <returns>True if a layer is currently being editted, false otherwise</returns>
+        bool IsEditting();
     }
 
     abstract class StartpuntTool : ISchetsTool
@@ -33,24 +37,38 @@ namespace SchetsEditor
         protected Point startpunt;
         /// <summary>The color that is to be used with this tool</summary>
         protected Color color;
-        /// <summary>The index of the layer we're currently editting (or -1 if we're not editting a layer)</summary>
-        protected int edittingLayer = -1;
+        /// <summary>The layer we're currently editting (or null if we're not editting a layer)</summary>
+        protected Layer edittingLayer = null;
 
         public virtual void MuisVast(SchetsControl s, Point p)
         {
             color = s.PenKleur;
             startpunt = p;
-            edittingLayer = -1;
+            edittingLayer = null;
         }
         public abstract void MuisLos(SchetsControl s, Point p);
         public abstract void MuisDrag(SchetsControl s, Point p);
         public abstract void Letter(SchetsControl s, char c);
+
+        public virtual bool IsEditting()
+        { return edittingLayer != null; }
     }
 
     class TekstTool : StartpuntTool
     {
         public override string ToString() { return "tekst"; }
 
+        public override void MuisVast(SchetsControl s, Point p)
+        {
+            if(edittingLayer != null)
+            {
+                ((LayerText) edittingLayer).Editting = false;
+                s.CommitAction(new SchetsActionAddLayer(edittingLayer));
+                s.Invalidate();
+            }
+
+            base.MuisVast(s, p);
+        }
         public override void MuisLos(SchetsControl s, Point p) { }
         public override void MuisDrag(SchetsControl s, Point p) { }
 
@@ -58,15 +76,13 @@ namespace SchetsEditor
         {
             if (c >= 32)
             {
-                if(edittingLayer == -1)
+                if(edittingLayer == null)
                 {
-                    LayerText layer = new LayerText(this.startpunt, color, new String(c, 1));
-                    s.Schets.Layers.Add(layer);
-                    edittingLayer = s.Schets.Layers.Count - 1;
-                    s.CommitAction(new SchetsActionAddLayer(layer));
+                    s.Schets.Layers.Add(edittingLayer = new LayerText(this.startpunt, color, new String(c, 1)));
+                    ((LayerText) edittingLayer).Editting = true;
                 }
                 else
-                    ((LayerText) s.Schets.Layers[edittingLayer]).Text += c;
+                    ((LayerText) edittingLayer).Text += c;
                 s.Invalidate();
             }
         }
@@ -85,7 +101,14 @@ namespace SchetsEditor
         { Bezig(s, startpunt, p); }
 
         public override void MuisLos(SchetsControl s, Point p)
-        { Compleet(s, startpunt, p); }
+        {
+            Bezig(s, startpunt, p);
+            if(edittingLayer != null)
+            {
+                s.CommitAction(new SchetsActionAddLayer(edittingLayer));
+                edittingLayer = null;
+            }
+        }
 
         // Ignore any key presses
         public override void Letter(SchetsControl s, char c){ }
@@ -102,24 +125,11 @@ namespace SchetsEditor
         /// <param name="p2">The second point/location of the layer</param>
         public virtual void Bezig(SchetsControl s, Point p1, Point p2)
         {
-            if(edittingLayer == -1)
-            {
-                s.Schets.Layers.Add(CreateLayer(p1, p2));
-                edittingLayer = s.Schets.Layers.Count - 1;
-            }
+            if(edittingLayer == null)
+                s.Schets.Layers.Add(edittingLayer = CreateLayer(p1, p2));
             else
-                ((LayerTwoPoint) s.Schets.Layers[edittingLayer]).SecondLocation = p2;
+                ((LayerTwoPoint) edittingLayer).SecondLocation = p2;
             s.Invalidate();
-        }
-
-        /// <summary>Called when the tool is done drawing the layer</summary>
-        /// <param name="s">The SchetsControl that the layer should be added to</param>
-        /// <param name="p1">The first point/location of the layer</param>
-        /// <param name="p2">The second point/location of the layer</param>
-        public virtual void Compleet(SchetsControl s, Point p1, Point p2)
-        {
-            Bezig(s, p1, p2);
-            s.CommitAction(new SchetsActionAddLayer(s.Schets.Layers[edittingLayer]));
         }
     }
 
@@ -153,21 +163,26 @@ namespace SchetsEditor
 
         public override void MuisDrag(SchetsControl s, Point p)
         {
-            if(edittingLayer == -1)
+            if(edittingLayer == null)
             {
-                LayerPath layerPath = new LayerPath(startpunt, color);
-                layerPath.Points.Add(p);
-                s.Schets.Layers.Add(layerPath);
-                edittingLayer = s.Schets.Layers.Count - 1;
+                edittingLayer = new LayerPath(startpunt, color);
+                ((LayerPath) edittingLayer).Points.Add(p);
+                s.Schets.Layers.Add(edittingLayer);
             }
             else
-                ((LayerPath) s.Schets.Layers[edittingLayer]).Points.Add(p);
+                ((LayerPath) edittingLayer).Points.Add(p);
             s.Invalidate();
         }
 
         // Commit the action on a mouse release event
         public override void MuisLos(SchetsControl s, Point p)
-        { s.CommitAction(new SchetsActionAddLayer(s.Schets.Layers[edittingLayer])); }
+        {
+            if(edittingLayer != null)
+            {
+                s.CommitAction(new SchetsActionAddLayer(edittingLayer));
+                edittingLayer = null;
+            }
+        }
 
         // Ignore any key presses
         public override void Letter(SchetsControl s, char c) { }
