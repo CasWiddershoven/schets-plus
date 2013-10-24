@@ -149,6 +149,22 @@ namespace SchetsEditor
         { return new LayerRectFilled(p1, p2, color); }
     }
 
+    class CircleTool : TweepuntTool
+    {
+        public override string ToString() { return "rondje"; }
+
+        public override LayerTwoPoint CreateLayer(Point p1, Point p2)
+        { return new LayerCircleOpen(p1, p2, color); }
+    }
+
+    class FilledCircleTool : CircleTool
+    {
+        public override string ToString() { return "cirkel"; }
+
+        public override LayerTwoPoint CreateLayer(Point p1, Point p2)
+        { return new LayerCircleFilled(p1, p2, color); }
+    }
+
     class LijnTool : TweepuntTool
     {
         public override string ToString() { return "lijn"; }

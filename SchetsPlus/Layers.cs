@@ -147,7 +147,8 @@ namespace SchetsEditor
         /// <param name="loc">The location</param>
         /// <param name="loc2">The second location</param>
         /// <param name="col">The color</param>
-        public LayerRectFilled(Point loc, Point loc2, Color col) : base(loc, loc2, col)
+        public LayerRectFilled(Point loc, Point loc2, Color col)
+            : base(loc, loc2, col)
         { }
 
         /// <summary>Draws the layer</summary>
@@ -165,7 +166,8 @@ namespace SchetsEditor
         /// <param name="loc">The location</param>
         /// <param name="loc2">The second location</param>
         /// <param name="col">The color</param>
-        public LayerRectOpen(Point loc, Point loc2, Color col) : base(loc, loc2, col)
+        public LayerRectOpen(Point loc, Point loc2, Color col)
+            : base(loc, loc2, col)
         { }
 
         /// <summary>Draws the layer</summary>
@@ -176,6 +178,47 @@ namespace SchetsEditor
             pen.StartCap = LineCap.Round;
             pen.EndCap = LineCap.Round;
             g.DrawRectangle(pen, GetBounds());
+        }
+    }
+
+    /// <summary>Represents a layer that contains a filled circle</summary>
+    class LayerCircleFilled : LayerTwoPoint
+    {
+        /// <summary>Constructor</summary>
+        /// <param name="loc">The location</param>
+        /// <param name="loc2">The second location</param>
+        /// <param name="col">The color</param>
+        public LayerCircleFilled(Point loc, Point loc2, Color col)
+            : base(loc, loc2, col)
+        { }
+
+        /// <summary>Draws the layer</summary>
+        /// <param name="g">The graphics object that is to be used to draw the layer</param>
+        public override void Draw(Graphics g)
+        {
+            g.FillEllipse(new SolidBrush(color), GetBounds());
+        }
+    }
+
+    /// <summary>Represents a layer that contains an open circle</summary>
+    class LayerCircleOpen : LayerTwoPoint
+    {
+        /// <summary>Constructor</summary>
+        /// <param name="loc">The location</param>
+        /// <param name="loc2">The second location</param>
+        /// <param name="col">The color</param>
+        public LayerCircleOpen(Point loc, Point loc2, Color col)
+            : base(loc, loc2, col)
+        { }
+
+        /// <summary>Draws the layer</summary>
+        /// <param name="g">The graphics object that is to be used to draw the layer</param>
+        public override void Draw(Graphics g)
+        {
+            Pen pen = new Pen(color, 3);
+            pen.StartCap = LineCap.Round;
+            pen.EndCap = LineCap.Round;
+            g.DrawEllipse(pen, GetBounds());
         }
     }
 
