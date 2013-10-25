@@ -49,8 +49,8 @@ namespace SchetsEditor
                                     , new LijnTool()
                                     , new RechthoekTool()
                                     , new VolRechthoekTool()
-                                    , new CircleTool()
-                                    , new FilledCircleTool()
+                                    , new EllipseTool()
+                                    , new FilledEllipseTool()
                                     , new TekstTool()
                                     , new GumTool()
                                     };
@@ -102,6 +102,10 @@ namespace SchetsEditor
         {
             ToolStripMenuItem menu = new ToolStripMenuItem("File");
             menu.MergeAction = MergeAction.MatchOnly;
+            menu.DropDownItems.Add(new ToolStripSeparator());
+            menu.DropDownItems.Add("Openen", null, loadFile);
+            menu.DropDownItems.Add("Opslaan", null, saveFile);
+            menu.DropDownItems.Add(new ToolStripSeparator());
             menu.DropDownItems.Add("Sluiten", null, this.afsluiten);
             menuStrip.Items.Add(menu);
         }
@@ -242,6 +246,28 @@ namespace SchetsEditor
 
             // No shortcut found, so we call the parent's handler
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        // Event handler to load the current drawing from a file
+        private void loadFile(object obj, EventArgs ea)
+        {
+            // Implement me
+        }
+
+        // Event handler to save the current drawing to a file
+        private void saveFile(object obj, EventArgs ea)
+        {
+            // Create a save file dialog
+            SaveFileDialog dlg = new SaveFileDialog();
+            dlg.Filter = "SchetsPlus schets (*.schets)|*.schets";
+            dlg.RestoreDirectory = true;
+
+            // Show the dialog
+            if(dlg.ShowDialog() == DialogResult.OK)
+            {
+                if(dlg.FileName != "")
+                    schetscontrol.Schets.SaveToFile(dlg.FileName);
+            }
         }
     }
 }

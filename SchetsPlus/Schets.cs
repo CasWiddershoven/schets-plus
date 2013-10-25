@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Xml;
 
 namespace SchetsEditor
 {
@@ -30,6 +31,30 @@ namespace SchetsEditor
         public void Roteer()
         {
             // Implement me
+        }
+
+        /// <summary>Saves the image to the given file</summary>
+        /// <param name="filename">The file to save to</param>
+        public void SaveToFile(String filename)
+        {
+            // Open the file
+            XmlTextWriter writer = new XmlTextWriter(filename, System.Text.Encoding.UTF8);
+
+            // Start the document and write the root element
+            writer.WriteStartDocument();
+            writer.WriteStartElement("schets");
+            writer.WriteStartAttribute("version");
+            writer.WriteValue(1);
+            writer.WriteEndAttribute();
+
+            // Write the layers
+            foreach(Layer layer in layers)
+                layer.WriteToXml(writer);
+
+            // Close the root element and save the document
+            writer.WriteEndElement();
+            writer.Flush();
+            writer.Close();
         }
     }
 }

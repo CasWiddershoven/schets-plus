@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Xml;
 
 namespace SchetsEditor
 {
@@ -40,6 +41,40 @@ namespace SchetsEditor
         /// <summary>Draws the layer</summary>
         /// <param name="g">The graphics object that is to be used to draw the layer</param>
         public abstract void Draw(Graphics g);
+
+        /// <summary>Static property to get the XML name of this type of layer</summary>
+        public static String XML_NAME { get { return "layer"; } }
+        /// <summary>Property to get the XML name of this type of layer</summary>
+        public virtual String XmlName { get { return XML_NAME; } }
+
+        /// <summary>Writes this layer to a XML document</summary>
+        /// <param name="writer">The XML document to write to</param>
+        public virtual void WriteToXml(XmlWriter writer)
+        {
+            writer.WriteStartElement(XmlName);
+            WriteDataToXml(writer);
+            writer.WriteEndElement();
+        }
+
+        /// <summary>Writes the data that compose this layer to a XML document.</summary>
+        /// <param name="writer">The XML document to write to</param>
+        protected virtual void WriteDataToXml(XmlWriter writer)
+        {
+            // The location
+            writer.WriteStartElement("location");
+            writer.WriteStartElement("x");
+            writer.WriteValue(location.X);
+            writer.WriteEndElement();
+            writer.WriteStartElement("y");
+            writer.WriteValue(location.Y);
+            writer.WriteEndElement();
+            writer.WriteEndElement();
+
+            // The color (as a 32-bit ARGB value)
+            writer.WriteStartElement("color");
+            writer.WriteValue(color.ToArgb());
+            writer.WriteEndElement();
+        }
 
         /// <summary>Whether the layer is clicked or not when clicking at the given position</summary>
         /// <param name="pos">The position where user clicked</param>
@@ -88,6 +123,24 @@ namespace SchetsEditor
             }
             g.DrawString(text, font, new SolidBrush(color), location);
         }
+
+        /// <summary>Static property to get the XML name of this type of layer</summary>
+        public new static String XML_NAME { get { return "layer-text"; } }
+        /// <summary>Property to get the XML name of this type of layer</summary>
+        public override String XmlName { get { return XML_NAME; } }
+
+        /// <summary>Writes the data that compose this layer to a XML document.</summary>
+        /// <param name="writer">The XML document to write to</param>
+        protected override void WriteDataToXml(XmlWriter writer)
+        {
+            // Call the base method
+            base.WriteDataToXml(writer);
+
+            // The text
+            writer.WriteStartElement("text");
+            writer.WriteString(text);
+            writer.WriteEndElement();
+        }
     }
     
     /// <summary>Represents a layer that contains two coordinates</summary>
@@ -117,6 +170,29 @@ namespace SchetsEditor
                 new Point(Math.Min(location.X, secondLocation.X), Math.Min(location.Y, secondLocation.Y)),
                 new Size(Math.Abs(location.X - secondLocation.X), Math.Abs(location.Y - secondLocation.Y)));
         }
+
+        /// <summary>Static property to get the XML name of this type of layer</summary>
+        public new static String XML_NAME { get { return "layer-two-point"; } }
+        /// <summary>Property to get the XML name of this type of layer</summary>
+        public override String XmlName { get { return XML_NAME; } }
+
+        /// <summary>Writes the data that compose this layer to a XML document.</summary>
+        /// <param name="writer">The XML document to write to</param>
+        protected override void WriteDataToXml(XmlWriter writer)
+        {
+            // Call the base method
+            base.WriteDataToXml(writer);
+
+            // The second location
+            writer.WriteStartElement("second-location");
+            writer.WriteStartElement("x");
+            writer.WriteValue(secondLocation.X);
+            writer.WriteEndElement();
+            writer.WriteStartElement("y");
+            writer.WriteValue(secondLocation.Y);
+            writer.WriteEndElement();
+            writer.WriteEndElement();
+        }
     }
 
     /// <summary>Represents a layer that contains a straight line</summary>
@@ -138,6 +214,11 @@ namespace SchetsEditor
             pen.EndCap = LineCap.Round;
             g.DrawLine(pen, location, secondLocation);
         }
+
+        /// <summary>Static property to get the XML name of this type of layer</summary>
+        public new static String XML_NAME { get { return "layer-line"; } }
+        /// <summary>Property to get the XML name of this type of layer</summary>
+        public override String XmlName { get { return XML_NAME; } }
     }
 
     /// <summary>Represents a layer that contains a filled rectangle</summary>
@@ -157,6 +238,11 @@ namespace SchetsEditor
         {
             g.FillRectangle(new SolidBrush(color), GetBounds());
         }
+
+        /// <summary>Static property to get the XML name of this type of layer</summary>
+        public new static String XML_NAME { get { return "layer-rect-filled"; } }
+        /// <summary>Property to get the XML name of this type of layer</summary>
+        public override String XmlName { get { return XML_NAME; } }
     }
 
     /// <summary>Represents a layer that contains an open rectangle</summary>
@@ -179,16 +265,21 @@ namespace SchetsEditor
             pen.EndCap = LineCap.Round;
             g.DrawRectangle(pen, GetBounds());
         }
+
+        /// <summary>Static property to get the XML name of this type of layer</summary>
+        public new static String XML_NAME { get { return "layer-rect-open"; } }
+        /// <summary>Property to get the XML name of this type of layer</summary>
+        public override String XmlName { get { return XML_NAME; } }
     }
 
-    /// <summary>Represents a layer that contains a filled circle</summary>
-    class LayerCircleFilled : LayerTwoPoint
+    /// <summary>Represents a layer that contains a filled ellipse</summary>
+    class LayerEllipseFilled : LayerTwoPoint
     {
         /// <summary>Constructor</summary>
         /// <param name="loc">The location</param>
         /// <param name="loc2">The second location</param>
         /// <param name="col">The color</param>
-        public LayerCircleFilled(Point loc, Point loc2, Color col)
+        public LayerEllipseFilled(Point loc, Point loc2, Color col)
             : base(loc, loc2, col)
         { }
 
@@ -198,16 +289,21 @@ namespace SchetsEditor
         {
             g.FillEllipse(new SolidBrush(color), GetBounds());
         }
+
+        /// <summary>Static property to get the XML name of this type of layer</summary>
+        public new static String XML_NAME { get { return "layer-ellipse-filled"; } }
+        /// <summary>Property to get the XML name of this type of layer</summary>
+        public override String XmlName { get { return XML_NAME; } }
     }
 
-    /// <summary>Represents a layer that contains an open circle</summary>
-    class LayerCircleOpen : LayerTwoPoint
+    /// <summary>Represents a layer that contains an open ellipse</summary>
+    class LayerEllipseOpen : LayerTwoPoint
     {
         /// <summary>Constructor</summary>
         /// <param name="loc">The location</param>
         /// <param name="loc2">The second location</param>
         /// <param name="col">The color</param>
-        public LayerCircleOpen(Point loc, Point loc2, Color col)
+        public LayerEllipseOpen(Point loc, Point loc2, Color col)
             : base(loc, loc2, col)
         { }
 
@@ -220,6 +316,11 @@ namespace SchetsEditor
             pen.EndCap = LineCap.Round;
             g.DrawEllipse(pen, GetBounds());
         }
+
+        /// <summary>Static property to get the XML name of this type of layer</summary>
+        public new static String XML_NAME { get { return "layer-ellipse-open"; } }
+        /// <summary>Property to get the XML name of this type of layer</summary>
+        public override String XmlName { get { return XML_NAME; } }
     }
 
     /// <summary>Represents a layer that contains a path</summary>
@@ -259,6 +360,37 @@ namespace SchetsEditor
             pen.StartCap = LineCap.Round;
             pen.EndCap = LineCap.Round;
             g.DrawPath(pen, path);
+        }
+
+        /// <summary>Static property to get the XML name of this type of layer</summary>
+        public new static String XML_NAME { get { return "layer-path"; } }
+        /// <summary>Property to get the XML name of this type of layer</summary>
+        public override String XmlName { get { return XML_NAME; } }
+
+        /// <summary>Writes the data that compose this layer to a XML document.</summary>
+        /// <param name="writer">The XML document to write to</param>
+        protected override void WriteDataToXml(XmlWriter writer)
+        {
+            // Call the base method
+            base.WriteDataToXml(writer);
+
+            // The points
+            writer.WriteStartElement("points");
+            writer.WriteStartAttribute("count");
+            writer.WriteValue(points.Count);
+            writer.WriteEndAttribute();
+            foreach(Point p in points)
+            {
+                writer.WriteStartElement("point");
+                writer.WriteStartElement("x");
+                writer.WriteValue(p.X);
+                writer.WriteEndElement();
+                writer.WriteStartElement("y");
+                writer.WriteValue(p.Y);
+                writer.WriteEndElement();
+                writer.WriteEndElement();
+            }
+            writer.WriteEndElement();
         }
     }
 }
