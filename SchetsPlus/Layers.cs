@@ -43,22 +43,22 @@ namespace SchetsEditor
         public abstract void Draw(Graphics g);
 
         /// <summary>Static property to get the XML name of this type of layer</summary>
-        public static String XML_NAME { get { return "layer"; } }
+        public const String XML_NAME = "layer";
         /// <summary>Property to get the XML name of this type of layer</summary>
         public virtual String XmlName { get { return XML_NAME; } }
 
         /// <summary>Writes this layer to a XML document</summary>
         /// <param name="writer">The XML document to write to</param>
-        public virtual void WriteToXml(XmlWriter writer)
+        public void WriteToXml(XmlWriter writer)
         {
             writer.WriteStartElement(XmlName);
-            WriteDataToXml(writer);
+            writeDataToXml(writer);
             writer.WriteEndElement();
         }
 
         /// <summary>Writes the data that compose this layer to a XML document.</summary>
         /// <param name="writer">The XML document to write to</param>
-        protected virtual void WriteDataToXml(XmlWriter writer)
+        protected virtual void writeDataToXml(XmlWriter writer)
         {
             // The location
             writer.WriteStartElement("location");
@@ -74,6 +74,50 @@ namespace SchetsEditor
             writer.WriteStartElement("color");
             writer.WriteValue(color.ToArgb());
             writer.WriteEndElement();
+        }
+
+        /// <summary>Reads the data for this layer from a XML document</summary>
+        /// <param name="reader">The XML document to read from</param>
+        public void ReadFromXml(XmlReader reader)
+        {
+            while(reader.Read())
+            {
+                if(reader.NodeType == XmlNodeType.Element)
+                    readDataFromXml(reader);
+                else if(reader.NodeType == XmlNodeType.EndElement && reader.Name == XmlName)
+                    break;
+            }
+        }
+
+        /// <summary>Called when the current node in the XmlReader should be parsed into data for this layer</summary>
+        /// <param name="reader">The XmlReader that holds the current node</param>
+        protected virtual void readDataFromXml(XmlReader reader)
+        {
+            // Read the location
+            if(reader.Name == "location")
+            {
+                reader.Read();
+                while(reader.NodeType != XmlNodeType.EndElement || reader.Name != "location")
+                {
+                    if(reader.NodeType == XmlNodeType.Element && (reader.Name == "x" || reader.Name == "y"))
+                    {
+                        if(reader.Name == "x")
+                            location.X = reader.ReadElementContentAsInt();
+                        else
+                            location.Y = reader.ReadElementContentAsInt();
+                    }
+                }
+            }
+            // Read the color
+            else if(reader.Name == "color")
+            {
+                reader.Read();
+                if(reader.NodeType == XmlNodeType.Text)
+                    color = Color.FromArgb(reader.ReadContentAsInt());
+                // else: ERROR
+                
+                //if(reader.NodeType != XmlNodeType.EndElement || reader.Name != "color"): ERROR
+            }
         }
 
         /// <summary>Whether the layer is clicked or not when clicking at the given position</summary>
@@ -125,21 +169,40 @@ namespace SchetsEditor
         }
 
         /// <summary>Static property to get the XML name of this type of layer</summary>
-        public new static String XML_NAME { get { return "layer-text"; } }
+        public new const String XML_NAME = "layer-text";
         /// <summary>Property to get the XML name of this type of layer</summary>
         public override String XmlName { get { return XML_NAME; } }
 
         /// <summary>Writes the data that compose this layer to a XML document.</summary>
         /// <param name="writer">The XML document to write to</param>
-        protected override void WriteDataToXml(XmlWriter writer)
+        protected override void writeDataToXml(XmlWriter writer)
         {
             // Call the base method
-            base.WriteDataToXml(writer);
+            base.writeDataToXml(writer);
 
             // The text
             writer.WriteStartElement("text");
             writer.WriteString(text);
             writer.WriteEndElement();
+        }
+
+        /// <summary>Called when the current node in the XmlReader should be parsed into data for this layer</summary>
+        /// <param name="reader">The XmlReader that holds the current node</param>
+        protected override void readDataFromXml(XmlReader reader)
+        {
+            // Read the location
+            if(reader.Name == "text")
+            {
+                reader.Read();
+                if(reader.NodeType == XmlNodeType.Text)
+                    text = reader.ReadContentAsString();
+                // else: ERROR
+
+                //if(reader.NodeType != XmlNodeType.EndElement || reader.Name != "text"): ERROR
+            }
+            // Let the base class read its data
+            else
+                base.readDataFromXml(reader);
         }
     }
     
@@ -172,16 +235,16 @@ namespace SchetsEditor
         }
 
         /// <summary>Static property to get the XML name of this type of layer</summary>
-        public new static String XML_NAME { get { return "layer-two-point"; } }
+        public new const String XML_NAME = "layer-two-point";
         /// <summary>Property to get the XML name of this type of layer</summary>
         public override String XmlName { get { return XML_NAME; } }
 
         /// <summary>Writes the data that compose this layer to a XML document.</summary>
         /// <param name="writer">The XML document to write to</param>
-        protected override void WriteDataToXml(XmlWriter writer)
+        protected override void writeDataToXml(XmlWriter writer)
         {
             // Call the base method
-            base.WriteDataToXml(writer);
+            base.writeDataToXml(writer);
 
             // The second location
             writer.WriteStartElement("second-location");
@@ -192,6 +255,30 @@ namespace SchetsEditor
             writer.WriteValue(secondLocation.Y);
             writer.WriteEndElement();
             writer.WriteEndElement();
+        }
+
+        /// <summary>Called when the current node in the XmlReader should be parsed into data for this layer</summary>
+        /// <param name="reader">The XmlReader that holds the current node</param>
+        protected override void readDataFromXml(XmlReader reader)
+        {
+            // Read the second location
+            if(reader.Name == "second-location")
+            {
+                reader.Read();
+                while(reader.NodeType != XmlNodeType.EndElement || reader.Name != "second-location")
+                {
+                    if(reader.NodeType == XmlNodeType.Element && (reader.Name == "x" || reader.Name == "y"))
+                    {
+                        if(reader.Name == "x")
+                            secondLocation.X = reader.ReadElementContentAsInt();
+                        else
+                            secondLocation.Y = reader.ReadElementContentAsInt();
+                    }
+                }
+            }
+            // Let the base class read its data
+            else
+                base.readDataFromXml(reader);
         }
     }
 
@@ -216,7 +303,7 @@ namespace SchetsEditor
         }
 
         /// <summary>Static property to get the XML name of this type of layer</summary>
-        public new static String XML_NAME { get { return "layer-line"; } }
+        public new const String XML_NAME = "layer-line";
         /// <summary>Property to get the XML name of this type of layer</summary>
         public override String XmlName { get { return XML_NAME; } }
     }
@@ -240,7 +327,7 @@ namespace SchetsEditor
         }
 
         /// <summary>Static property to get the XML name of this type of layer</summary>
-        public new static String XML_NAME { get { return "layer-rect-filled"; } }
+        public new const String XML_NAME = "layer-rect-filled";
         /// <summary>Property to get the XML name of this type of layer</summary>
         public override String XmlName { get { return XML_NAME; } }
     }
@@ -267,7 +354,7 @@ namespace SchetsEditor
         }
 
         /// <summary>Static property to get the XML name of this type of layer</summary>
-        public new static String XML_NAME { get { return "layer-rect-open"; } }
+        public new const String XML_NAME = "layer-rect-open";
         /// <summary>Property to get the XML name of this type of layer</summary>
         public override String XmlName { get { return XML_NAME; } }
     }
@@ -291,7 +378,7 @@ namespace SchetsEditor
         }
 
         /// <summary>Static property to get the XML name of this type of layer</summary>
-        public new static String XML_NAME { get { return "layer-ellipse-filled"; } }
+        public new const String XML_NAME = "layer-ellipse-filled";
         /// <summary>Property to get the XML name of this type of layer</summary>
         public override String XmlName { get { return XML_NAME; } }
     }
@@ -318,7 +405,7 @@ namespace SchetsEditor
         }
 
         /// <summary>Static property to get the XML name of this type of layer</summary>
-        public new static String XML_NAME { get { return "layer-ellipse-open"; } }
+        public new const String XML_NAME = "layer-ellipse-open";
         /// <summary>Property to get the XML name of this type of layer</summary>
         public override String XmlName { get { return XML_NAME; } }
     }
@@ -363,16 +450,16 @@ namespace SchetsEditor
         }
 
         /// <summary>Static property to get the XML name of this type of layer</summary>
-        public new static String XML_NAME { get { return "layer-path"; } }
+        public new const String XML_NAME = "layer-path";
         /// <summary>Property to get the XML name of this type of layer</summary>
         public override String XmlName { get { return XML_NAME; } }
 
         /// <summary>Writes the data that compose this layer to a XML document.</summary>
         /// <param name="writer">The XML document to write to</param>
-        protected override void WriteDataToXml(XmlWriter writer)
+        protected override void writeDataToXml(XmlWriter writer)
         {
             // Call the base method
-            base.WriteDataToXml(writer);
+            base.writeDataToXml(writer);
 
             // The points
             writer.WriteStartElement("points");
@@ -391,6 +478,49 @@ namespace SchetsEditor
                 writer.WriteEndElement();
             }
             writer.WriteEndElement();
+        }
+
+        /// <summary>Called when the current node in the XmlReader should be parsed into data for this layer</summary>
+        /// <param name="reader">The XmlReader that holds the current node</param>
+        protected override void readDataFromXml(XmlReader reader)
+        {
+            // Read the points
+            if(reader.Name == "points")
+            {
+                // Read the amount of points
+                int pointCount = 0;
+                while(reader.MoveToNextAttribute())
+                {
+                    if(reader.Name == "count")
+                        pointCount = reader.ReadContentAsInt();
+                }
+
+                // Create the list of points
+                points = new List<Point>(pointCount);
+                while(reader.NodeType != XmlNodeType.EndElement || reader.Name != "points")
+                {
+                    reader.Read();
+                    if(reader.NodeType == XmlNodeType.Element && reader.Name == "point")
+                    {
+                        Point p = new Point(0, 0);
+                        reader.Read();
+                        while(reader.NodeType != XmlNodeType.EndElement || reader.Name != "point")
+                        {
+                            if(reader.NodeType == XmlNodeType.Element && (reader.Name == "x" || reader.Name == "y"))
+                            {
+                                if(reader.Name == "x")
+                                    p.X = reader.ReadElementContentAsInt();
+                                else
+                                    p.Y = reader.ReadElementContentAsInt();
+                            }
+                        }
+                        points.Add(p);
+                    }
+                }
+            }
+            // Let the base class read its data
+            else
+                base.readDataFromXml(reader);
         }
     }
 }

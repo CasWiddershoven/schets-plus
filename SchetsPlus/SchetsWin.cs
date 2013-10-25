@@ -251,7 +251,19 @@ namespace SchetsEditor
         // Event handler to load the current drawing from a file
         private void loadFile(object obj, EventArgs ea)
         {
-            // Implement me
+            // Create an open file dialog
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.Filter = "SchetsPlus schets (*.schets)|*.schets";
+
+            // Show the dialog
+            if(dlg.ShowDialog() == DialogResult.OK)
+            {
+                if(dlg.FileName != "")
+                {
+                    schetscontrol.Schets.LoadFromFile(dlg.FileName);
+                    schetscontrol.Invalidate();
+                }
+            }
         }
 
         // Event handler to save the current drawing to a file
@@ -260,7 +272,6 @@ namespace SchetsEditor
             // Create a save file dialog
             SaveFileDialog dlg = new SaveFileDialog();
             dlg.Filter = "SchetsPlus schets (*.schets)|*.schets";
-            dlg.RestoreDirectory = true;
 
             // Show the dialog
             if(dlg.ShowDialog() == DialogResult.OK)
