@@ -29,7 +29,7 @@ namespace SchetsEditor
         /// <summary>Rotate the canvas</summary>
         public void Roteer()
         {
-            // Implement me
+            throw new NotImplementedException(); // Implement me
         }
     }
 }
