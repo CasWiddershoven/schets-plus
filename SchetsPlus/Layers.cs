@@ -123,8 +123,7 @@ namespace SchetsEditor
         /// <summary>Whether the layer is clicked or not when clicking at the given position</summary>
         /// <param name="pos">The position where user clicked</param>
         /// <returns>True if the layer is clicked, otherwise false</returns>
-        //public abstract bool IsClicked(Point pos);
-        // To be used for the eraser tool (and possibly a tool to select and move a layer)
+        public abstract bool IsClicked(Point pos);
     }
 
     /// <summary>Represents a layer that contains some text</summary>
@@ -146,6 +145,9 @@ namespace SchetsEditor
             set { text = value; }
         }
 
+        /// <summary>Keeps track of the bottom right corner of the bounding rectangle</summary>
+        private Point bottomRight;
+
         /// <summary>Whether or not the layer is currently being editted</summary>
         protected bool editting = false;
         /// <summary>Property to set or get whether the layer is currently being editted</summary>
@@ -164,6 +166,7 @@ namespace SchetsEditor
             {
                 SizeF textSize = g.MeasureString(text, font);
                 g.DrawRectangle(new Pen(Color.Gray, 3), location.X, location.Y, textSize.Width, textSize.Height);
+                bottomRight = new Point(location.X + (int)textSize.Width, location.Y + (int)textSize.Height);
             }
             g.DrawString(text, font, new SolidBrush(color), location);
         }
@@ -203,6 +206,12 @@ namespace SchetsEditor
             // Let the base class read its data
             else
                 base.readDataFromXml(reader);
+        }
+
+        public override bool IsClicked(Point pos)
+        {
+            const int maxDistance = 5;
+            return pos.X > location.X - maxDistance && pos.X < bottomRight.X + maxDistance && pos.Y > location.Y - maxDistance && pos.Y < bottomRight.Y + maxDistance;
         }
     }
     
@@ -306,6 +315,74 @@ namespace SchetsEditor
         public new const String XML_NAME = "layer-line";
         /// <summary>Property to get the XML name of this type of layer</summary>
         public override String XmlName { get { return XML_NAME; } }
+
+        /// <summary>Calculates the distance from a point to a line</summary>
+        /// <param name="pos">The point</param>
+        /// <returns>The distance from the point to the line</returns>
+        private double distance(Point pos)
+        {
+            double slope;
+            Point leftPoint = location.X < secondLocation.X ? location : secondLocation;
+            Point rightPoint = leftPoint == location ? secondLocation : location;
+            try
+            {
+                slope = (double)(rightPoint.Y - leftPoint.Y) / (double)(rightPoint.X - leftPoint.X); // The slope of the line between location and secondLocation
+            }
+            catch (DivideByZeroException) // If it's a vertical line
+            {
+                Point highPoint, lowPoint;
+                if (location.Y < secondLocation.Y) // location is higher than secondLocation
+                {
+                    highPoint = location;
+                    lowPoint = secondLocation;
+                }
+                else
+                {
+                    highPoint = secondLocation;
+                    lowPoint = location;
+                }
+                if (pos.Y < lowPoint.Y && pos.Y > highPoint.Y) // pos is inbetween the two points
+                {
+                    return Math.Abs(pos.X - lowPoint.X); // So the shortest distance is perfectly horizontal
+                }
+                else
+                { // pos is higher or lower than the line
+                    int yDistance;
+                    if (pos.Y < highPoint.Y)
+                    { // pos is higher than the line
+                        yDistance = highPoint.Y - pos.Y;
+                    }
+                    else
+                    { // pos is lower than the line
+                        yDistance = pos.Y - lowPoint.Y;
+                    }
+                    // Pythagorean theorem
+                    return Math.Sqrt(Math.Pow(Math.Abs(pos.X - lowPoint.X), 2) + Math.Pow(yDistance, 2));
+                }
+            }
+            double intercept = (double)(leftPoint.Y - slope * leftPoint.X); // The intercept with x=0 of the line through location and secondLocation
+
+            // Next is an implementation of the 'other possible equation' found at
+            // http://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Another_possible_equation
+            double xIntercept = (double)((pos.X + slope * pos.Y - slope * intercept) / (Math.Pow(slope, 2) + 1));
+            double distance = Math.Sqrt(Math.Pow(xIntercept - pos.X, 2) + Math.Pow(slope*xIntercept + intercept - pos.Y, 2));
+
+            return distance;
+        }
+
+        public override bool IsClicked(Point pos)
+        {
+            const double maxDistance = 5.0;
+            int left = location.X < secondLocation.X ? location.X : secondLocation.X;
+            int right = location.X == left ? secondLocation.X : location.X;
+            int top = location.Y < secondLocation.Y ? location.Y : secondLocation.Y;
+            int bottom = location.Y == top ? secondLocation.Y : location.Y;
+            return !(left - pos.X > maxDistance ||
+                    pos.X - right > maxDistance ||
+                    top - pos.Y > maxDistance ||
+                    pos.Y - bottom > maxDistance || 
+                    distance(pos) > maxDistance);
+        }
     }
 
     /// <summary>Represents a layer that contains a filled rectangle</summary>
@@ -330,6 +407,23 @@ namespace SchetsEditor
         public new const String XML_NAME = "layer-rect-filled";
         /// <summary>Property to get the XML name of this type of layer</summary>
         public override String XmlName { get { return XML_NAME; } }
+
+        public override bool IsClicked(Point pos)
+        {
+            int left = location.X < secondLocation.X ? location.X : secondLocation.X;
+            int right = location.X == left ? secondLocation.X : location.X;
+            int top = location.Y < secondLocation.Y ? location.Y : secondLocation.Y;
+            int bottom = location.Y == top ? secondLocation.Y : location.Y;
+            double maxDistance = 5;
+            if (    pos.X < left - maxDistance || 
+                    pos.X > right + maxDistance || 
+                    pos.Y < top - maxDistance || 
+                    pos.Y > bottom + maxDistance)
+            {
+                return false;
+            }
+            return true;
+        }
     }
 
     /// <summary>Represents a layer that contains an open rectangle</summary>
@@ -357,6 +451,27 @@ namespace SchetsEditor
         public new const String XML_NAME = "layer-rect-open";
         /// <summary>Property to get the XML name of this type of layer</summary>
         public override String XmlName { get { return XML_NAME; } }
+
+        public override bool IsClicked(Point pos)
+        {
+            int left = location.X < secondLocation.X ? location.X : secondLocation.X;
+            int right = location.X == left ? secondLocation.X : location.X;
+            int top = location.Y < secondLocation.Y ? location.Y : secondLocation.Y;
+            int bottom = location.Y == top ? secondLocation.Y : location.Y;
+            double maxDistance = 5;
+            if (    ((Math.Abs(pos.X - left) < maxDistance) || 
+                    (Math.Abs(pos.X - right) < maxDistance) && 
+                    pos.Y - maxDistance > top && 
+                    pos.Y + maxDistance < bottom) ||
+                    ((Math.Abs(pos.Y - top) < maxDistance) ||
+                    (Math.Abs(pos.Y - bottom) < maxDistance) &&
+                    pos.X - maxDistance > left &&
+                    pos.X + maxDistance < right)) // Or; if it's within the boundaries of the lines of the rectangle
+            {
+                return true;
+            }
+            return false;
+        }
     }
 
     /// <summary>Represents a layer that contains a filled ellipse</summary>
@@ -381,6 +496,14 @@ namespace SchetsEditor
         public new const String XML_NAME = "layer-ellipse-filled";
         /// <summary>Property to get the XML name of this type of layer</summary>
         public override String XmlName { get { return XML_NAME; } }
+
+        public override bool IsClicked(Point pos)
+        {
+            /*double centerX = (double)(location.X + secondLocation.X) / 2d;
+            double centerY = (double)(location.Y + secondLocation.Y) / 2d;
+            double radius = (double)*/
+            return false;
+        }
     }
 
     /// <summary>Represents a layer that contains an open ellipse</summary>
@@ -408,6 +531,11 @@ namespace SchetsEditor
         public new const String XML_NAME = "layer-ellipse-open";
         /// <summary>Property to get the XML name of this type of layer</summary>
         public override String XmlName { get { return XML_NAME; } }
+
+        public override bool IsClicked(Point pos)
+        {
+            return false;
+        }
     }
 
     /// <summary>Represents a layer that contains a path</summary>
@@ -438,8 +566,6 @@ namespace SchetsEditor
             // Create the path
             GraphicsPath path = new GraphicsPath();
             Point[] pathPoints = new Point[points.Count + 1];
-            pathPoints[0] = location;
-            Array.Copy(points.ToArray(), 0, pathPoints, 1, points.Count);
             path.AddLines(pathPoints);
 
             // Draw the path
@@ -521,6 +647,68 @@ namespace SchetsEditor
             // Let the base class read its data
             else
                 base.readDataFromXml(reader);
+        }
+
+        /// <summary>Calculates the distance from a point to a line</summary>
+        /// <param name="pos">The point</param>
+        /// <returns>The distance from the point to the line</returns>
+        private double distance(Point pos, Point location, Point secondLocation)
+        {
+            double slope;
+            try
+            {
+                slope = (double)((secondLocation.Y - location.Y) / (location.X - secondLocation.X)); // The slope of the line between location and secondLocation
+            }
+            catch (DivideByZeroException e) // If it's a vertical line
+            {
+                Point highPoint, lowPoint;
+                if (location.Y < secondLocation.Y) // location is higher than secondLocation
+                {
+                    highPoint = location;
+                    lowPoint = secondLocation;
+                } else {
+                    highPoint = secondLocation;
+                    lowPoint = location;
+                }
+                if (pos.Y < lowPoint.Y && pos.Y > highPoint.Y) // pos is inbetween the two points
+                {
+                    return Math.Abs(pos.X - lowPoint.X); // So the shortest distance is perfectly horizontal
+                } else { // pos is higher or lower than the line
+                    int yDistance;
+                    if (pos.Y < highPoint.Y) { // pos is higher than the line
+                        yDistance = highPoint.Y - pos.Y;
+                    } else { // pos is lower than the line
+                        yDistance = pos.Y - lowPoint.Y;
+                    }
+                    // Pythagorean theorem
+                    return Math.Sqrt(Math.Pow(Math.Abs(pos.X - lowPoint.X), 2) + Math.Pow(yDistance, 2));
+                }
+            }
+            double intercept = (double)(location.Y - slope * location.X); // The intercept with x=0 of the line through location and secondLocation
+
+            // Next is an implementation of the 'other possible equation' found at
+            // http://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Another_possible_equation
+            double xIntercept = (double)((pos.X + slope * pos.Y - slope * intercept) / (Math.Pow(slope, 2) + 1));
+            double distance = Math.Sqrt(Math.Pow(xIntercept - pos.X, 2) + Math.Pow(xIntercept + intercept - pos.Y, 2));
+
+            return distance;
+        }
+
+        public override bool IsClicked(Point pos)
+        {
+            int maxDistance = 5;
+            Point[] pathPoints = new Point[points.Count + 1];
+            pathPoints[0] = location;
+            Array.Copy(points.ToArray(), 0, pathPoints, 1, points.Count);
+            for (int i = 0; i < pathPoints.Length - 1; i++)
+            {
+                if (distance(pos, pathPoints[i], pathPoints[i + 1]) < maxDistance)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

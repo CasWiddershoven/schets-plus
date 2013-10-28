@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Collections.Generic;
 
 namespace SchetsEditor
 {
@@ -207,5 +208,23 @@ namespace SchetsEditor
     class GumTool : PenTool
     {
         public override string ToString() { return "gum"; }
+
+        // Commit the action on a mouse release event
+        public override void MuisLos(SchetsControl s, Point p)
+        {
+            List<Layer> layers = s.Schets.Layers;
+            //layers.Reverse();
+
+            foreach (Layer layer in layers)
+            {
+                if (layer.IsClicked(p))
+                {
+                    s.Schets.Layers.Remove(layer);
+                    s.CommitAction(new SchetsActionRemoveLayer(layer));
+                    s.Invalidate();
+                    return;
+                }
+            }
+        }
     }
 }

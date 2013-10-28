@@ -30,7 +30,7 @@ namespace SchetsEditor
         /// <summary>Rotate the canvas</summary>
         public void Roteer()
         {
-            // Implement me
+            throw new NotImplementedException(); // Implement me
         }
 
         /// <summary>Saves the image to the given file</summary>
