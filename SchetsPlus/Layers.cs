@@ -561,11 +561,13 @@ namespace SchetsEditor
         public override void Draw(Graphics g)
         {
             // If there are no points in the path, there is nothing to do
-            if(points.Count == 0) return ;
+            if(points.Count == 0) return;
 
             // Create the path
             GraphicsPath path = new GraphicsPath();
             Point[] pathPoints = new Point[points.Count + 1];
+            pathPoints[0] = location;
+            Array.Copy(points.ToArray(), 0, pathPoints, 1, points.Count);
             path.AddLines(pathPoints);
 
             // Draw the path

@@ -8,28 +8,32 @@ namespace SchetsEditor
     interface ISchetsTool
     {
         /// <summary>Called when the mouse button is pressed</summary>
-        /// <param name="s">The SchetsControls that the button is pressed on</param>
+        /// <param name="s">The SchetsControl that the button is pressed on</param>
         /// <param name="p">The location of the cursor</param>
         void MuisVast(SchetsControl s, Point p);
 
         /// <summary>Called when the mouse is dragging (with the mouse button down)</summary>
-        /// <param name="s">The SchetsControls that the button is being dragged on</param>
+        /// <param name="s">The SchetsControl that the button is being dragged on</param>
         /// <param name="p">The location of the cursor</param>
         void MuisDrag(SchetsControl s, Point p);
 
         /// <summary>Called when the mouse button is released</summary>
-        /// <param name="s">The SchetsControls that the button is released from</param>
+        /// <param name="s">The SchetsControl that the button is released from</param>
         /// <param name="p">The location of the cursor</param>
         void MuisLos(SchetsControl s, Point p);
 
         /// <summary>Called when a key is pressed</summary>
-        /// <param name="s">The SchetsControls that the key is pressed on</param>
+        /// <param name="s">The SchetsControl that the key is pressed on</param>
         /// <param name="c">The key that is pressed</param>
         void Letter(SchetsControl s, char c);
 
         /// <summary>Whether or not the tool is currently editting a layer</summary>
         /// <returns>True if a layer is currently being editted, false otherwise</returns>
         bool IsEditting();
+
+        /// <summary>Called when another tool is selected</summary>
+        /// <param name="s">The SchetsControl that the tool was previously working on</param>
+        void ToolChange(SchetsControl s);
     }
 
     abstract class StartpuntTool : ISchetsTool
@@ -53,6 +57,8 @@ namespace SchetsEditor
 
         public virtual bool IsEditting()
         { return edittingLayer != null; }
+
+        public virtual void ToolChange(SchetsControl s) { }
     }
 
     class TekstTool : StartpuntTool
@@ -84,6 +90,18 @@ namespace SchetsEditor
                 }
                 else
                     ((LayerText) edittingLayer).Text += c;
+                s.Invalidate();
+            }
+        }
+
+        // Make sure that if we are editting a layer, the layer is always added to the Schets
+        // and that its Editting property is set to false when changing tools
+        public override void ToolChange(SchetsControl s)
+        {
+            if(edittingLayer != null)
+            {
+                ((LayerText) edittingLayer).Editting = false;
+                s.CommitAction(new SchetsActionAddLayer(edittingLayer));
                 s.Invalidate();
             }
         }
@@ -131,6 +149,16 @@ namespace SchetsEditor
             else
                 ((LayerTwoPoint) edittingLayer).SecondLocation = p2;
             s.Invalidate();
+        }
+
+        // Make sure that if we are editting a layer, the layer is always added to the Schets
+        public override void ToolChange(SchetsControl s)
+        {
+            if(edittingLayer != null)
+            {
+                s.CommitAction(new SchetsActionAddLayer(edittingLayer));
+                edittingLayer = null;
+            }
         }
     }
 
@@ -203,28 +231,48 @@ namespace SchetsEditor
 
         // Ignore any key presses
         public override void Letter(SchetsControl s, char c) { }
+
+        // Make sure that if we are editting a layer, the layer is always added to the Schets
+        public override void ToolChange(SchetsControl s)
+        {
+            if(edittingLayer != null)
+            {
+                s.CommitAction(new SchetsActionAddLayer(edittingLayer));
+                edittingLayer = null;
+            }
+        }
     }
-    
-    class GumTool : PenTool
+
+    class GumTool : ISchetsTool
     {
         public override string ToString() { return "gum"; }
 
-        // Commit the action on a mouse release event
-        public override void MuisLos(SchetsControl s, Point p)
-        {
-            List<Layer> layers = s.Schets.Layers;
-            //layers.Reverse();
+        public virtual void MuisVast(SchetsControl s, Point p) { eraseLayer(s, p); }
+        public virtual void MuisDrag(SchetsControl s, Point p) { eraseLayer(s, p); }
+        public virtual void Letter(SchetsControl s, char c) { }
+        public virtual void MuisLos(SchetsControl s, Point p) { }
 
-            foreach (Layer layer in layers)
+        /// <summary>Erases the layer at the given position (if there is one)</summary>
+        /// <param name="s">The SchetsControl to erase the layer from</param>
+        /// <param name="p">The position of the layer that should be erased</param>
+        private void eraseLayer(SchetsControl s, Point p)
+        {
+            // Loop through the layers from top to bottom
+            for(int i = s.Schets.Layers.Count; i != 0; --i)
             {
-                if (layer.IsClicked(p))
+                // Check if we found a layer at the given position
+                if(s.Schets.Layers[i-1].IsClicked(p))
                 {
-                    s.Schets.Layers.Remove(layer);
-                    s.CommitAction(new SchetsActionRemoveLayer(layer));
+                    s.CommitAction(new SchetsActionRemoveLayer(s.Schets.Layers[i - 1], i - 1));
+                    s.Schets.Layers.RemoveAt(i - 1);
                     s.Invalidate();
                     return;
                 }
             }
         }
+
+        public virtual bool IsEditting()
+        { return false; }
+        public virtual void ToolChange(SchetsControl s) { }
     }
 }

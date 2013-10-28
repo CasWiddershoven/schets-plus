@@ -23,16 +23,23 @@ namespace SchetsEditor
         /// <summary>The layer that was removed from the SchetsControl</summary>
         private Layer removedLayer;
 
+        /// <summary>The index of the layer that was removed</summary>
+        private int index;
+
         /// <summary>Construct the action</summary>
         /// <param name="layer">The layer that was removed from the SchetsControl</param>
-        public SchetsActionRemoveLayer(Layer layer)
-        { removedLayer = layer; }
+        /// <param name="i">The index of the layer</param>
+        public SchetsActionRemoveLayer(Layer layer, int i)
+        {
+            removedLayer = layer;
+            index = i;
+        }
 
         /// <summary>Undo the action for the given SchetsControl</summary>
         /// <param name="s">The SchetsControl that the action should be undone for</param>
         public override void Undo(SchetsControl s)
         {
-            s.Schets.Layers.Add(removedLayer);
+            s.Schets.Layers.Insert(index, removedLayer);
         }
 
         /// <summary>Redo the action for the given SchetsControl</summary>

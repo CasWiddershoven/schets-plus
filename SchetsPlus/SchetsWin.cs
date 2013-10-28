@@ -30,11 +30,13 @@ namespace SchetsEditor
 
         private void klikToolMenu(object obj, EventArgs ea)
         {
+            this.huidigeTool.ToolChange(schetscontrol);
             this.huidigeTool = (ISchetsTool) ((ToolStripMenuItem) obj).Tag;
         }
 
         private void klikToolButton(object obj, EventArgs ea)
         {
+            this.huidigeTool.ToolChange(schetscontrol);
             this.huidigeTool = (ISchetsTool) ((RadioButton) obj).Tag;
         }
 
@@ -45,15 +47,14 @@ namespace SchetsEditor
 
         public SchetsWin()
         {
-            ISchetsTool[] deTools = { new PenTool()         
-                                    , new LijnTool()
-                                    , new RechthoekTool()
-                                    , new VolRechthoekTool()
-                                    , new EllipseTool()
-                                    , new FilledEllipseTool()
-                                    , new TekstTool()
-                                    , new GumTool()
-                                    };
+            ISchetsTool[] deTools = { new PenTool(),
+                                      new LijnTool(),
+                                      new RechthoekTool(),
+                                      new VolRechthoekTool(),
+                                      new EllipseTool(),
+                                      new FilledEllipseTool(),
+                                      new TekstTool(),
+                                      new GumTool() };
             String[] deKleuren = { "Black", "Red", "Green", "Blue"
                                  , "Yellow", "Magenta", "Cyan" 
                                  };
