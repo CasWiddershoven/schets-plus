@@ -32,12 +32,14 @@ namespace SchetsEditor
         {
             this.huidigeTool.ToolChange(schetscontrol);
             this.huidigeTool = (ISchetsTool) ((ToolStripMenuItem) obj).Tag;
+            this.huidigeTool.ToolSelected(schetscontrol);
         }
 
         private void klikToolButton(object obj, EventArgs ea)
         {
             this.huidigeTool.ToolChange(schetscontrol);
             this.huidigeTool = (ISchetsTool) ((RadioButton) obj).Tag;
+            this.huidigeTool.ToolSelected(schetscontrol);
         }
 
         private void afsluiten(object obj, EventArgs ea)

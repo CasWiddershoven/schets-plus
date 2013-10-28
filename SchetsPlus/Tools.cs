@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Collections.Generic;
+using System.Windows.Forms;
 
 namespace SchetsEditor
 {
@@ -34,6 +35,10 @@ namespace SchetsEditor
         /// <summary>Called when another tool is selected</summary>
         /// <param name="s">The SchetsControl that the tool was previously working on</param>
         void ToolChange(SchetsControl s);
+
+        /// <summary>Called when this tool is selected</summary>
+        /// <param name="s">The SchetsControl that the tool will be working on</param>
+        void ToolSelected(SchetsControl s);
     }
 
     abstract class StartpuntTool : ISchetsTool
@@ -59,6 +64,7 @@ namespace SchetsEditor
         { return edittingLayer != null; }
 
         public virtual void ToolChange(SchetsControl s) { }
+        public abstract void ToolSelected(SchetsControl s);
     }
 
     class TekstTool : StartpuntTool
@@ -105,6 +111,10 @@ namespace SchetsEditor
                 s.Invalidate();
             }
         }
+
+        // Set the right cursor for this tool
+        public override void ToolSelected(SchetsControl s)
+        { s.Cursor = Cursors.IBeam; }
     }
 
     abstract class TweepuntTool : StartpuntTool
@@ -160,6 +170,10 @@ namespace SchetsEditor
                 edittingLayer = null;
             }
         }
+
+        // Set the right cursor for this tool
+        public override void ToolSelected(SchetsControl s)
+        { s.Cursor = Cursors.Cross; }
     }
 
     class RechthoekTool : TweepuntTool
@@ -188,7 +202,7 @@ namespace SchetsEditor
 
     class FilledEllipseTool : EllipseTool
     {
-        public override string ToString() { return "cirkel"; }
+        public override string ToString() { return "ellips"; }
 
         public override LayerTwoPoint CreateLayer(Point p1, Point p2)
         { return new LayerEllipseFilled(p1, p2, color); }
@@ -241,6 +255,10 @@ namespace SchetsEditor
                 edittingLayer = null;
             }
         }
+
+        // Set the right cursor for this tool
+        public override void ToolSelected(SchetsControl s)
+        { s.Cursor = Cursors.Cross; }
     }
 
     class GumTool : ISchetsTool
@@ -274,5 +292,9 @@ namespace SchetsEditor
         public virtual bool IsEditting()
         { return false; }
         public virtual void ToolChange(SchetsControl s) { }
+
+        // Set the right cursor for this tool
+        public virtual void ToolSelected(SchetsControl s)
+        { s.Cursor = Cursors.Cross; }
     }
 }
