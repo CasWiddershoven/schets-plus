@@ -263,8 +263,15 @@ namespace SchetsEditor
             {
                 if(dlg.FileName != "")
                 {
-                    schetscontrol.Schets.LoadFromFile(dlg.FileName);
-                    schetscontrol.Invalidate();
+                    try
+                    {
+                        schetscontrol.Schets.LoadFromFile(dlg.FileName);
+                        schetscontrol.Invalidate();
+                    }
+                    catch(Exception e)
+                    {
+                        MessageBox.Show("Er is een fout opgetreden bij het laden van het bestand.\nFoutboodschap:\n\n" + e.Message, "FOUT!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
         }
@@ -280,7 +287,16 @@ namespace SchetsEditor
             if(dlg.ShowDialog() == DialogResult.OK)
             {
                 if(dlg.FileName != "")
-                    schetscontrol.Schets.SaveToFile(dlg.FileName);
+                {
+                    try
+                    {
+                        schetscontrol.Schets.SaveToFile(dlg.FileName);
+                    }
+                    catch(Exception e)
+                    {
+                        MessageBox.Show("Er is een fout opgetreden bij het opslaan van het bestand.\nFoutboodschap:\n\n" + e.Message, "FOUT!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
             }
         }
     }

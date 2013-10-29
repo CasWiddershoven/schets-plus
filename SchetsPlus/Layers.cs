@@ -113,10 +113,16 @@ namespace SchetsEditor
             {
                 reader.Read();
                 if(reader.NodeType == XmlNodeType.Text)
-                    color = Color.FromArgb(reader.ReadContentAsInt());
-                // else: ERROR
-                
-                //if(reader.NodeType != XmlNodeType.EndElement || reader.Name != "color"): ERROR
+                {
+                    try { color = Color.FromArgb(reader.ReadContentAsInt()); }
+                    catch(Exception)
+                    { throw new XmlException("Verkeerd kleurformaat."); }
+                }
+                else
+                    throw new XmlException("Een 'text node' werd verwacht.");
+
+                if(reader.NodeType != XmlNodeType.EndElement || reader.Name != "color")
+                    throw new XmlException("Onverwachte 'node', de node '</color>' werd verwacht.");
             }
         }
 
@@ -203,9 +209,11 @@ namespace SchetsEditor
                 reader.Read();
                 if(reader.NodeType == XmlNodeType.Text)
                     text = reader.ReadContentAsString();
-                // else: ERROR
+                else
+                    throw new XmlException("Een 'text node' werd verwacht.");
 
-                //if(reader.NodeType != XmlNodeType.EndElement || reader.Name != "text"): ERROR
+                if(reader.NodeType != XmlNodeType.EndElement || reader.Name != "text")
+                    throw new XmlException("Onverwachte 'node', de node '</text>' werd verwacht.");
             }
             // Let the base class read its data
             else
