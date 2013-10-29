@@ -99,6 +99,7 @@ namespace SchetsEditor
             this.maakAktieButtons(deKleuren);
             this.Resize += this.veranderAfmeting;
             this.veranderAfmeting(null, null);
+            this.FormClosing += SchetsWin_FormClosing;
         }
 
         private void maakFileMenu()
@@ -251,9 +252,29 @@ namespace SchetsEditor
             return base.ProcessCmdKey(ref msg, keyData);
         }
 
+        /// <summary>Asks the user if he's sure he wants to continue with the current operation because some unsaved changes will be lost.</summary>
+        /// <returns>Whether or not the user wants to continue with the current operation</returns>
+        private bool askAboutUnsavedChanges()
+        {
+            return  DialogResult.Yes == MessageBox.Show("Weet u zeker dat u door wilt gaan?\nEr zijn onopgeslagen wijzigingen die verloren zullen gaan!",
+                                                        "Onopgeslagen wijzigingen", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+        }
+
+        // Fires when the form is about to be closed
+        void SchetsWin_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            // Notify the user of unsaved changes (if there are any)
+            if(!schetscontrol.ChangesSaved && !askAboutUnsavedChanges())
+                e.Cancel = true;
+        }
+
         // Event handler to load the current drawing from a file
         private void loadFile(object obj, EventArgs ea)
         {
+            // Notify the user of unsaved changes (if there are any)
+            if(!schetscontrol.ChangesSaved && !askAboutUnsavedChanges())
+                return;
+
             // Create an open file dialog
             OpenFileDialog dlg = new OpenFileDialog();
             dlg.Filter = "SchetsPlus schets (*.schets)|*.schets";
@@ -266,6 +287,7 @@ namespace SchetsEditor
                     try
                     {
                         schetscontrol.Schets.LoadFromFile(dlg.FileName);
+                        schetscontrol.ClearHistory();
                         schetscontrol.Invalidate();
                     }
                     catch(Exception e)
@@ -291,6 +313,7 @@ namespace SchetsEditor
                     try
                     {
                         schetscontrol.Schets.SaveToFile(dlg.FileName);
+                        schetscontrol.ChangesSaved = true;
                     }
                     catch(Exception e)
                     {

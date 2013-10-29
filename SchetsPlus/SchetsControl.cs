@@ -58,11 +58,27 @@ namespace SchetsEditor
             penkleur = Color.FromName(kleurNaam);
         }
 
+        /// <summary>Clears the history, this will also set ChangesSaved to true (since there are no more changes)</summary>
+        public void ClearHistory()
+        {
+            // Clear the history and reset actionPos
+            actions.Clear();
+            actionPos = -1;
+            
+            // There are no changes anymore, so all changes are now saved
+            ChangesSaved = true;
+
+            // Trigger the CanUndoRedo event
+            callCanUndoRedo();
+        }
+
         /// <summary>Adds an action to the action list</summary>
         /// <param name="action">The action to add</param>
         public void CommitAction(SchetsAction action)
         {
             // Remove any undone actions
+            if(actionSavedPos >= actionPos + 1)
+                actionSavedPos = -2;
             if(actionPos + 1 < actions.Count)
                 actions.RemoveRange(actionPos + 1, actions.Count - actionPos - 1);
 
@@ -113,6 +129,16 @@ namespace SchetsEditor
         {
             if(CanUndoRedo != null)
                 CanUndoRedo(actionPos >= 0, actionPos + 1 < actions.Count);
+        }
+
+        /// <summary>The position in the action list for which the changes where saved, or -2 if there is no position for which the changes are saved</summary>
+        private int actionSavedPos = -1;
+
+        /// <summary>Whether or not the changes are saved</summary>
+        public bool ChangesSaved
+        {
+            get { return actionPos == actionSavedPos; }
+            set { actionSavedPos = value ? actionPos : -2; }
         }
     }
 }
