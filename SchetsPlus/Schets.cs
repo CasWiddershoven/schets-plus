@@ -28,9 +28,14 @@ namespace SchetsEditor
         }
 
         /// <summary>Rotate the canvas</summary>
-        public void Roteer()
+        public void Roteer(int width, int height)
         {
-            throw new NotImplementedException(); // Implement me
+            double xCenter = width / 2d;
+            double yCenter = height / 2d;
+            foreach (Layer layer in layers)
+            {
+                layer.Rotate(xCenter, yCenter);
+            }
         }
 
         /// <summary>Saves the image to the given file</summary>

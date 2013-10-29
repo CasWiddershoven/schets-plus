@@ -98,6 +98,11 @@ namespace SchetsEditor
                     ((LayerText) edittingLayer).Text += c;
                 s.Invalidate();
             }
+            else if (c == '\b')
+            { // If the user pressed backspace
+                ((LayerText)edittingLayer).Text = ((LayerText)edittingLayer).Text.Substring(0, ((LayerText)edittingLayer).Text.Length - 1);
+                s.Invalidate();
+            }
         }
 
         // Make sure that if we are editting a layer, the layer is always added to the Schets
@@ -106,7 +111,7 @@ namespace SchetsEditor
         {
             if(edittingLayer != null)
             {
-                ((LayerText) edittingLayer).Editting = false;
+                ((LayerText)edittingLayer).Editting = false;
                 s.CommitAction(new SchetsActionAddLayer(edittingLayer));
                 s.Invalidate();
             }

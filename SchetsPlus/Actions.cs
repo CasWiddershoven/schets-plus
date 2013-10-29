@@ -102,4 +102,34 @@ namespace SchetsEditor
             s.Schets.Layers.Clear();
         }
     }
+
+    /// <summary>Represents an action where the entire drawing is rotated 90 degrees</summary>
+    class SchetsActionRotate : SchetsAction
+    {
+        public SchetsActionRotate() { }
+
+        public override void Undo(SchetsControl s)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                double xCenter = s.Width / 2d;
+                double yCenter = s.Height / 2d;
+                foreach (Layer layer in s.Schets.Layers)
+                {
+                    layer.Rotate(xCenter, yCenter);
+                }
+            }
+            // Three times 90 degrees is the same as one time -90 degrees
+        }
+
+        public override void Redo(SchetsControl s)
+        {
+            double xCenter = s.Width / 2d;
+            double yCenter = s.Height / 2d;
+            foreach (Layer layer in s.Schets.Layers)
+            {
+                layer.Rotate(xCenter, yCenter);
+            }
+        }
+    }
 }

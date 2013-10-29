@@ -44,8 +44,9 @@ namespace SchetsEditor
         }
         public void Roteer(object o, EventArgs ea)
         {
-            schets.Roteer();
-            Invalidate();
+            CommitAction(new SchetsActionRotate());
+            schets.Roteer(Width, Height);
+            this.Invalidate();
         }
         public void VeranderKleur(object obj, EventArgs ea)
         {

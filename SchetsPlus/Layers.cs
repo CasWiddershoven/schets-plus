@@ -42,6 +42,11 @@ namespace SchetsEditor
         /// <param name="g">The graphics object that is to be used to draw the layer</param>
         public abstract void Draw(Graphics g);
 
+        /// <summary>Rotates the layer</summary>
+        /// <param name="xCenter">The x center to rotate around</param>
+        /// <param name="yCenter">The y center to rotate around</param>
+        public abstract void Rotate(double xCenter, double yCenter);
+
         /// <summary>Static property to get the XML name of this type of layer</summary>
         public const String XML_NAME = "layer";
         /// <summary>Property to get the XML name of this type of layer</summary>
@@ -171,6 +176,8 @@ namespace SchetsEditor
         /// <param name="g">The graphics object that is to be used to draw the layer</param>
         public override void Draw(Graphics g)
         {
+            Matrix oldTransform = g.Transform; // Save the old transform
+            g.Transform = rotationMatrix; // And rotate g for now
             Font font = new Font("Tahoma", 40);
             if(editting)
             {
@@ -179,6 +186,26 @@ namespace SchetsEditor
                 bottomRight = new Point(location.X + (int)textSize.Width, location.Y + (int)textSize.Height);
             }
             g.DrawString(text, font, new SolidBrush(color), location);
+            g.Transform = oldTransform; // Reinstate the old transform
+        }
+
+        /// <summary>The angle at which the layer is drawn</summary>
+        private int angle = 0;
+        /// <summary>The center of the image at the time when the rotationMatrix was created</summary>
+        private Point center;
+
+        /// <summary>The matrix used for rotating the layer</summary>
+        private Matrix rotationMatrix = new Matrix();
+
+        /// <summary>Rotates the layer</summary>
+        /// <param name="xCenter">The x center to rotate around</param>
+        /// <param name="yCenter">The y center to rotate around</param>
+        public override void Rotate(double xCenter, double yCenter)
+        {
+            angle += 90;
+            rotationMatrix = new Matrix();
+            center = new Point((int)xCenter, (int)yCenter);
+            rotationMatrix.RotateAt(-angle, center);
         }
 
         /// <summary>Static property to get the XML name of this type of layer</summary>
@@ -222,6 +249,11 @@ namespace SchetsEditor
 
         public override bool IsClicked(Point pos)
         {
+            Point[] posArr = { pos };
+            Matrix transformMatrix = new Matrix();
+            transformMatrix.RotateAt(angle, center); // Somehow it has to be rotated at angle instead of -angle like in rotationMatrix...
+            transformMatrix.TransformPoints(posArr);
+            pos = posArr[0];
             return pos.X > location.X - ALLOWED_ERROR && pos.X < bottomRight.X + ALLOWED_ERROR && pos.Y > location.Y - ALLOWED_ERROR && pos.Y < bottomRight.Y + ALLOWED_ERROR;
         }
     }
@@ -252,6 +284,22 @@ namespace SchetsEditor
             return new Rectangle(
                 new Point(Math.Min(location.X, secondLocation.X), Math.Min(location.Y, secondLocation.Y)),
                 new Size(Math.Abs(location.X - secondLocation.X), Math.Abs(location.Y - secondLocation.Y)));
+        }
+        
+        /// <summary>Rotates the layer</summary>
+        /// <param name="xCenter">The x center to rotate around</param>
+        /// <param name="yCenter">The y center to rotate around</param>
+        public override void Rotate(double xCenter, double yCenter)
+        {
+            double localX = location.X - xCenter;
+            double localY = location.Y - yCenter;
+            double secondLocalX = secondLocation.X - xCenter;
+            double secondLocalY = secondLocation.Y - yCenter;
+
+            location.X = (int)(xCenter + localY);
+            location.Y = (int)(yCenter - localX);
+            secondLocation.X = (int)(xCenter + secondLocalY);
+            secondLocation.Y = (int)(yCenter - secondLocalX);
         }
 
         /// <summary>Static property to get the XML name of this type of layer</summary>
@@ -656,6 +704,23 @@ namespace SchetsEditor
 
             // No line segment found that is close enough, so we return false
             return false;
+        }
+
+        public override void Rotate(double xCenter, double yCenter)
+        {
+            double locLocalX = location.X - xCenter;
+            double locLocalY = location.Y - yCenter;
+
+            location.X = (int)(xCenter + locLocalY);
+            location.Y = (int)(yCenter - locLocalX);
+
+            for (int i = 0; i < Points.Count; i++)
+            {
+                double localX = Points[i].X - xCenter;
+                double localY = Points[i].Y - yCenter;
+
+                Points[i] = new Point((int)(xCenter + localY), (int)(yCenter - localX));
+            }        
         }
     }
 }
