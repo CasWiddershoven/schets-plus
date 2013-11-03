@@ -109,6 +109,8 @@ namespace SchetsEditor
             menu.DropDownItems.Add(new ToolStripSeparator());
             menu.DropDownItems.Add("Openen", null, loadFile);
             menu.DropDownItems.Add("Opslaan", null, saveFile);
+            menu.DropDownItems.Add("Importeren van...", null, loadBitmap);
+            menu.DropDownItems.Add("Exporteren naar...", null, saveBitmap);
             menu.DropDownItems.Add(new ToolStripSeparator());
             menu.DropDownItems.Add("Sluiten", null, this.afsluiten);
             menuStrip.Items.Add(menu);
@@ -268,6 +270,40 @@ namespace SchetsEditor
                 e.Cancel = true;
         }
 
+        /// <summary>A function to get a file name using an OpenFileDialog</summary>
+        /// <param name="filetype">The type of the file expected by the caller</param>
+        /// <returns>The filename, or an empty string if something went wrong</returns>
+        private string getFileNameOpen(string filetype)
+        {
+            // Create an open file dialog
+            OpenFileDialog dlg = new OpenFileDialog();
+            dlg.Filter = filetype;
+
+            // Show the dialog
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                return dlg.FileName;
+            }
+            else return "";
+        }
+
+        /// <summary>A function to get a file name using a SaveFileDialog</summary>
+        /// <param name="filetype">The type of the file expected by the caller</param>
+        /// <returns>The filename, or an empty string if something went wrong</returns>
+        private string getFileNameSave(string filetype)
+        {
+            // Create an open file dialog
+            SaveFileDialog dlg = new SaveFileDialog();
+            dlg.Filter = filetype;
+
+            // Show the dialog
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                return dlg.FileName;
+            }
+            else return "";
+        }
+        
         // Event handler to load the current drawing from a file
         private void loadFile(object obj, EventArgs ea)
         {
@@ -275,25 +311,43 @@ namespace SchetsEditor
             if(!schetscontrol.ChangesSaved && !askAboutUnsavedChanges())
                 return;
 
-            // Create an open file dialog
-            OpenFileDialog dlg = new OpenFileDialog();
-            dlg.Filter = "SchetsPlus schets (*.schets)|*.schets";
+            string filename = getFileNameOpen("SchetsPlus schets (*.schets)|*.schets");
 
-            // Show the dialog
-            if(dlg.ShowDialog() == DialogResult.OK)
+            if(filename != "")
             {
-                if(dlg.FileName != "")
+                try
                 {
-                    try
-                    {
-                        schetscontrol.Schets.LoadFromFile(dlg.FileName);
-                        schetscontrol.ClearHistory();
-                        schetscontrol.Invalidate();
-                    }
-                    catch(Exception e)
-                    {
-                        MessageBox.Show("Er is een fout opgetreden bij het laden van het bestand.\nFoutboodschap:\n\n" + e.Message, "FOUT!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    schetscontrol.Schets.LoadFromFile(filename);
+                    schetscontrol.ClearHistory();
+                    schetscontrol.Invalidate();
+                }
+                catch(Exception e)
+                {
+                    MessageBox.Show("Er is een fout opgetreden bij het laden van het bestand.\nFoutboodschap:\n\n" + e.Message, "FOUT!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            } 
+        }
+
+        // Event handler to load the current drawing from a bitmap
+        private void loadBitmap(object obj, EventArgs ea)
+        {
+            // Notify the user of unsaved changes (if there are any)
+            if (!schetscontrol.ChangesSaved && !askAboutUnsavedChanges())
+                return;
+
+            string filename = getFileNameOpen("Image jpeg (*.jpg)|*.jpg");
+
+            if (filename != "")
+            {
+                try
+                {
+                    schetscontrol.Schets.LoadBitmap(filename);
+                    schetscontrol.ClearHistory();
+                    schetscontrol.Invalidate();
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show("Er is een fout opgetreden bij het laden van het bestand.\nFoutboodschap:\n\n" + e.Message, "FOUT!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -301,24 +355,36 @@ namespace SchetsEditor
         // Event handler to save the current drawing to a file
         private void saveFile(object obj, EventArgs ea)
         {
-            // Create a save file dialog
-            SaveFileDialog dlg = new SaveFileDialog();
-            dlg.Filter = "SchetsPlus schets (*.schets)|*.schets";
+            string filename = getFileNameSave("SchetsPlus schets (*.schets)|*.schets");
 
-            // Show the dialog
-            if(dlg.ShowDialog() == DialogResult.OK)
+            if(filename != "")
             {
-                if(dlg.FileName != "")
+                try
                 {
-                    try
-                    {
-                        schetscontrol.Schets.SaveToFile(dlg.FileName);
-                        schetscontrol.ChangesSaved = true;
-                    }
-                    catch(Exception e)
-                    {
-                        MessageBox.Show("Er is een fout opgetreden bij het opslaan van het bestand.\nFoutboodschap:\n\n" + e.Message, "FOUT!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
+                    schetscontrol.Schets.SaveToFile(filename);
+                    schetscontrol.ChangesSaved = true;
+                }
+                catch(Exception e)
+                {
+                    MessageBox.Show("Er is een fout opgetreden bij het opslaan van het bestand.\nFoutboodschap:\n\n" + e.Message, "FOUT!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        // Event handler to save the current drawing to a bitmap
+        private void saveBitmap(object obj, EventArgs ea)
+        {
+            string filename = getFileNameSave("Image jpeg (*.jpg)|*.jpg");
+
+            if (filename != "")
+            {
+                try
+                {
+                    schetscontrol.Schets.saveBitmap(filename, schetscontrol.Width, schetscontrol.Height);
+                }
+                catch (Exception e)
+                {
+                    MessageBox.Show("Er is een fout opgetreden bij het opslaan van het bestand.\nFoutboodschap:\n\n" + e.Message, "FOUT!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }

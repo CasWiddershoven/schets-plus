@@ -444,6 +444,83 @@ namespace SchetsEditor
         }
     }
 
+    /// <summary>Represents a layer that contains a bitmap</summary>
+    class LayerBitmap : LayerRectFilled
+    {
+        private Bitmap bitmap;
+
+        /// <summary>Constructor</summary>
+        /// <param name="loc1">The location</param>
+        /// <param name="bitmap">The bitmap it contains</param>
+        public LayerBitmap(Point loc1, Bitmap bitmap) : base(loc1, new Point(), Color.Black)
+        {
+            secondLocation = new Point(loc1.X + bitmap.Width, loc1.Y + bitmap.Height);
+            this.bitmap = bitmap;
+        }
+
+        /// <summary>Draws the layer</summary>
+        /// <param name="g">The graphics object that is to be used to draw the layer</param>
+        public override void Draw(Graphics g)
+        {
+            g.DrawImage(bitmap, GetBounds());
+        }
+
+        /// <summary>Rotates the layer</summary>
+        /// <param name="xCenter">The center in x to rotate around</param>
+        /// <param name="yCenter">The center in y to rotate around</param>
+        public override void Rotate(double xCenter, double yCenter)
+        {
+            this.bitmap.RotateFlip(RotateFlipType.Rotate270FlipNone);
+            base.Rotate(xCenter, yCenter);
+        }
+
+        /// <summary>Static property to get the XML name of this type of layer</summary>
+        public new const String XML_NAME = "layer-image";
+        /// <summary>Property to get the XML name of this type of layer</summary>
+        public override String XmlName { get { return XML_NAME; } }
+
+        /// <summary>Writes the data that compose this layer to a XML document.</summary>
+        /// <param name="writer">The XML document to write to</param>
+        protected override void writeDataToXml(XmlWriter writer)
+        {
+            // Call the base method
+            base.writeDataToXml(writer);
+
+            // Let's get a saveable format of the image
+            ImageConverter icer = new ImageConverter();
+            String imageData = Convert.ToBase64String((byte[])icer.ConvertTo(bitmap, typeof(byte[])));
+
+            // The image itself
+            writer.WriteStartElement("image-data");
+            writer.WriteCData(imageData);
+            writer.WriteEndElement();
+        }
+
+        /// <summary>Called when the current node in the XmlReader should be parsed into data for this layer</summary>
+        /// <param name="reader">The XmlReader that holds the current node</param>
+        protected override void readDataFromXml(XmlReader reader)
+        {
+            // Read the second location
+            if (reader.Name == "image-data")
+            {
+                reader.Read();
+                while (reader.NodeType != XmlNodeType.EndElement || reader.Name != "image-data")
+                {
+                    if (reader.NodeType == XmlNodeType.CDATA)
+                    {
+                        ImageConverter icer = new ImageConverter();
+                        String imageString = reader.ReadContentAsString();
+                        byte[] imageData = Convert.FromBase64String(imageString);
+                        bitmap = (Bitmap)icer.ConvertFrom(imageData);
+                    }
+                }
+            }
+            // Let the base class read its data
+            else
+                base.readDataFromXml(reader);
+        }
+    }
+
     /// <summary>Represents a layer that contains an open rectangle</summary>
     class LayerRectOpen : LayerTwoPoint
     {

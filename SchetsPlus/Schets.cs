@@ -76,6 +76,51 @@ namespace SchetsEditor
             finally
             { writer.Close(); }
         }
+
+        /// <summary>Saves the image to the given bitmap file</summary>
+        /// <param name="filename">The file to save to</param>
+        /// <param name="width">The width of the bitmap</param>
+        /// <param name="height">The height of the bitmap</param>
+        public void saveBitmap(string filename, int width, int height)
+        {
+            Bitmap image = new Bitmap(width, height);
+            Graphics g = Graphics.FromImage(image);
+            this.Teken(g);
+            try
+            {
+                image.Save(filename);
+            }
+            catch (UnauthorizedAccessException)
+            { throw new Exception("U heeft niet de juiste rechten om het bestand te openen voor schrijven."); }
+            catch (System.Security.SecurityException)
+            { throw new Exception("U heeft niet de juiste rechten om het bestand te openen voor schrijven."); }
+            catch (System.IO.DirectoryNotFoundException)
+            { throw new Exception("Kon het bestand niet vinden."); }
+            catch (System.IO.IOException)
+            { throw new Exception("Kon het bestand niet openen voor schrijven."); }
+            catch (Exception)
+            { throw new Exception("Een onverwachte fout is opgetreden!"); }
+        }
+
+        /// <summary>Loads an image from a bitmap file</summary>
+        public void LoadBitmap(String filename)
+        {
+            layers.Clear();
+            Bitmap image = null;
+            try
+            {
+                image = (Bitmap)Bitmap.FromFile(filename);
+            }
+            catch (UnauthorizedAccessException)
+            { throw new Exception("U heeft niet de juiste rechten om het bestand te openen voor lezen."); }
+            catch (System.IO.DirectoryNotFoundException)
+            { throw new Exception("Kon het bestand niet vinden."); }
+            finally
+            {
+                LayerBitmap layer = new LayerBitmap(new Point(0, 0), image);
+                layers.Add(layer);
+            }
+        }
         
         /// <summary>Loads the image from the given file</summary>
         /// <param name="filename">The file to load from</param>
@@ -119,14 +164,14 @@ namespace SchetsEditor
                 try
                 {
                     layers.Clear();
-                    while(reader.Read())
+                    while (reader.Read())
                     {
-                        if(reader.NodeType == XmlNodeType.EndElement && reader.Name == "schets")
+                        if (reader.NodeType == XmlNodeType.EndElement && reader.Name == "schets")
                             break;
-                        else if(reader.NodeType == XmlNodeType.Element && reader.Name.Substring(0, 5) == "layer")
+                        else if (reader.NodeType == XmlNodeType.Element && reader.Name.StartsWith("layer"))
                         {
                             Layer layer = null;
-                            switch(reader.Name)
+                            switch (reader.Name)
                             {
                                 case LayerText.XML_NAME:
                                     layer = new LayerText(new Point(0, 0), Color.Black, "");
@@ -155,19 +200,24 @@ namespace SchetsEditor
                                 case LayerPath.XML_NAME:
                                     layer = new LayerPath(new Point(0, 0), Color.Black);
                                     break;
+
+                                case LayerBitmap.XML_NAME:
+                                    layer = new LayerBitmap(new Point(0, 0), new Bitmap(1,1));
+                                    break;
                             }
-                            if(layer != null)
+                            if (layer != null)
                             {
                                 layer.ReadFromXml(reader);
                                 layers.Add(layer);
                             }
                         }
+                        else throw new Exception(reader.Name);
                     }
                 }
                 catch(XmlException e)
                 { throw new Exception(e.Message); }
-                catch(Exception)
-                { throw new Exception("Er is een onverwachte fout opgetreden!"); }
+                catch(Exception e)
+                { throw new Exception("Er is een onverwachte fout opgetreden! Foutmelding:" + e.Message + "\n" + e.StackTrace); }
             }
             catch(UnauthorizedAccessException)
             { throw new Exception("U heeft niet de juiste rechten om het bestand te openen voor lezen."); }
