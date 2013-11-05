@@ -303,4 +303,68 @@ namespace SchetsEditor
         public virtual void ToolSelected(SchetsControl s)
         { s.Cursor = Cursors.Cross; }
     }
+
+    class MoveTool : ISchetsTool
+    {
+        public override string ToString() { return "move"; }
+
+        /// <summary>The layer that is to be moved</summary>
+        protected Layer selectedLayer = null;
+
+        /// <summary>The cursor when the layer was last moved</summary>
+        protected Point lastPoint = new Point(0, 0);
+
+        /// <summary>The old position of the layer, before is was moved</summary>
+        protected Point oldLayerPos = new Point(0, 0);
+
+        public virtual void MuisVast(SchetsControl s, Point p)
+        {
+            // Loop through the layers from top to bottom to determine whether a layer is selected
+            for(int i = s.Schets.Layers.Count; i != 0; --i)
+            {
+                // Check if we found a layer at the given position
+                if(s.Schets.Layers[i - 1].IsClicked(p))
+                {
+                    selectedLayer = s.Schets.Layers[i - 1];
+                    oldLayerPos = selectedLayer.Location;
+                    lastPoint = p;
+                    break;
+                }
+            }
+        }
+        public virtual void MuisDrag(SchetsControl s, Point p)
+        {
+            if(selectedLayer != null)
+            {
+                selectedLayer.Move(p.X - lastPoint.X, p.Y - lastPoint.Y);
+                lastPoint = p;
+                s.Invalidate();
+            }
+        }
+        public virtual void Letter(SchetsControl s, char c) { }
+        public virtual void MuisLos(SchetsControl s, Point p)
+        {
+            // Call ToolChange(), since all it does is committing the move action
+            ToolChange(s);
+        }
+
+        public virtual bool IsEditting()
+        { return selectedLayer != null; }
+
+        // Commit the move action when the tool changes
+        public virtual void ToolChange(SchetsControl s)
+        {
+            if(selectedLayer != null)
+            {
+                s.CommitAction(new SchetsActionMove(selectedLayer, selectedLayer.Location.X - oldLayerPos.X, selectedLayer.Location.Y - oldLayerPos.Y));
+                s.Invalidate();
+                selectedLayer = null;
+            }
+        }
+
+        // Set the right cursor for this tool
+        public virtual void ToolSelected(SchetsControl s)
+        { s.Cursor = Cursors.SizeAll; }
+
+    }
 }

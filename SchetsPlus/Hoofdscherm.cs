@@ -32,7 +32,8 @@ namespace SchetsEditor
             menuStrip.Items.Add(menu);
         }
         private void about(object o, EventArgs ea)
-        {   MessageBox.Show("Schets versie 1.0\n(c) UU Informatica 2010"
+        {   MessageBox.Show("SchetsPlus versie 1.0\nDoor: Mark Kamsma en Cas Widdershoven\n\n" +
+                            "Gebaseerd op:\nSchets versie 1.0\n(c) UU Informatica 2010"
                            , "Over \"Schets\""
                            , MessageBoxButtons.OK
                            , MessageBoxIcon.Information

@@ -47,6 +47,15 @@ namespace SchetsEditor
         /// <param name="yCenter">The y center to rotate around</param>
         public abstract void Rotate(double xCenter, double yCenter);
 
+        /// <summary>Moves the layer</summary>
+        /// <param name="dx">The amount of pixels to move the layer horizontally</param>
+        /// <param name="dy">The amount of pixels to move the layer vertically</param>
+        public virtual void Move(int dx, int dy)
+        {
+            location.X += dx;
+            location.Y += dy;
+        }
+
         /// <summary>Static property to get the XML name of this type of layer</summary>
         public const String XML_NAME = "layer";
         /// <summary>Property to get the XML name of this type of layer</summary>
@@ -349,6 +358,16 @@ namespace SchetsEditor
             location.Y = (int)(yCenter - localX);
             secondLocation.X = (int)(xCenter + secondLocalY);
             secondLocation.Y = (int)(yCenter - secondLocalX);
+        }
+
+        /// <summary>Moves the layer</summary>
+        /// <param name="dx">The amount of pixels to move the layer horizontally</param>
+        /// <param name="dy">The amount of pixels to move the layer vertically</param>
+        public override void Move(int dx, int dy)
+        {
+            secondLocation.X += dx;
+            secondLocation.Y += dy;
+            base.Move(dx, dy);
         }
 
         /// <summary>Static property to get the XML name of this type of layer</summary>
@@ -736,6 +755,33 @@ namespace SchetsEditor
             g.DrawPath(pen, path);
         }
 
+        public override void Rotate(double xCenter, double yCenter)
+        {
+            double locLocalX = location.X - xCenter;
+            double locLocalY = location.Y - yCenter;
+
+            location.X = (int) (xCenter + locLocalY);
+            location.Y = (int) (yCenter - locLocalX);
+
+            for(int i = 0; i < Points.Count; ++i)
+            {
+                double localX = points[i].X - xCenter;
+                double localY = points[i].Y - yCenter;
+
+                Points[i] = new Point((int) (xCenter + localY), (int) (yCenter - localX));
+            }
+        }
+
+        /// <summary>Moves the layer</summary>
+        /// <param name="dx">The amount of pixels to move the layer horizontally</param>
+        /// <param name="dy">The amount of pixels to move the layer vertically</param>
+        public override void Move(int dx, int dy)
+        {
+            for(int i = 0; i < points.Count; ++i)
+                points[i] = new Point(points[i].X + dx, points[i].Y + dy);
+            base.Move(dx, dy);
+        }
+
         /// <summary>Static property to get the XML name of this type of layer</summary>
         public new const String XML_NAME = "layer-path";
         /// <summary>Property to get the XML name of this type of layer</summary>
@@ -830,23 +876,6 @@ namespace SchetsEditor
 
             // No line segment found that is close enough, so we return false
             return false;
-        }
-
-        public override void Rotate(double xCenter, double yCenter)
-        {
-            double locLocalX = location.X - xCenter;
-            double locLocalY = location.Y - yCenter;
-
-            location.X = (int)(xCenter + locLocalY);
-            location.Y = (int)(yCenter - locLocalX);
-
-            for (int i = 0; i < Points.Count; i++)
-            {
-                double localX = Points[i].X - xCenter;
-                double localY = Points[i].Y - yCenter;
-
-                Points[i] = new Point((int)(xCenter + localY), (int)(yCenter - localX));
-            }        
         }
     }
 }

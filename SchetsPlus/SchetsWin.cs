@@ -57,7 +57,8 @@ namespace SchetsEditor
                                       new EllipseTool(),
                                       new FilledEllipseTool(),
                                       new TekstTool(),
-                                      new GumTool() };
+                                      new GumTool(),
+                                      new MoveTool() };
             String[] deKleuren = { "Black", "Red", "Green", "Blue"
                                  , "Yellow", "Magenta", "Cyan" 
                                  };

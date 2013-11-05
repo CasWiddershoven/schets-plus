@@ -140,4 +140,41 @@ namespace SchetsEditor
                 layer.Rotate(xCenter, yCenter);
         }
     }
+
+
+    /// <summary>Represents an action where a layer is moved</summary>
+    class SchetsActionMove : SchetsAction
+    {
+        /// <summary>The layer that was moved</summary>
+        private Layer layer;
+        /// <summary>The horizontal movement</summary>
+        private int dx;
+        /// <summary>The vertical movement</summary>
+        private int dy;
+
+        /// <summary>Constructor</summary>
+        /// <param name="l">The layer that was moved</param>
+        /// <param name="deltaX">The horizontal movement</param>
+        /// <param name="deltaY">The vertical movement</param>
+        public SchetsActionMove(Layer l, int deltaX, int deltaY)
+        {
+            layer = l;
+            dx = deltaX;
+            dy = deltaY;
+        }
+
+        /// <summary>Undo the action for the given SchetsControl</summary>
+        /// <param name="s">The SchetsControl that the action should be undone for</param>
+        public override void Undo(SchetsControl s)
+        {
+            layer.Move(-dx, -dy);
+        }
+
+        /// <summary>Redo the action for the given SchetsControl</summary>
+        /// <param name="s">The SchetsControl that the action should be redone for</param>
+        public override void Redo(SchetsControl s)
+        {
+            layer.Move(dx, dy);
+        }
+    }
 }
