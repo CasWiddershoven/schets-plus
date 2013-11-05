@@ -160,8 +160,8 @@ namespace SchetsEditor
             set { text = value; }
         }
 
-        /// <summary>Keeps track of the bottom right corner of the bounding rectangle</summary>
-        private Point bottomRight;
+        /// <summary>Keeps track of the size of the bounding rectangle</summary>
+        private Size boundingSize;
 
         /// <summary>Whether or not the layer is currently being editted</summary>
         protected bool editting = false;
@@ -176,36 +176,43 @@ namespace SchetsEditor
         /// <param name="g">The graphics object that is to be used to draw the layer</param>
         public override void Draw(Graphics g)
         {
-            Matrix oldTransform = g.Transform; // Save the old transform
-            g.Transform = rotationMatrix; // And rotate g for now
+            // Save the current graphics state
+            GraphicsState gState = g.Save();
+
+            // Apply the rotation
+            g.TranslateTransform(location.X, location.Y);
+            g.RotateTransform(angle);
+
+            // Determine the text size
             Font font = new Font("Tahoma", 40);
+            boundingSize = g.MeasureString(text, font).ToSize();
+
+            // Draw the editting box (if necessary)
             if(editting)
-            {
-                SizeF textSize = g.MeasureString(text, font);
-                g.DrawRectangle(new Pen(Color.Gray, 3), location.X, location.Y, textSize.Width, textSize.Height);
-                bottomRight = new Point(location.X + (int)textSize.Width, location.Y + (int)textSize.Height);
-            }
-            g.DrawString(text, font, new SolidBrush(color), location);
-            g.Transform = oldTransform; // Reinstate the old transform
+                g.DrawRectangle(new Pen(Color.Gray, 3), 0, 0, boundingSize.Width, boundingSize.Height);
+
+            // Draw a nice anti-aliased text
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.DrawString(text, font, new SolidBrush(color), 0, 0);
+
+            // Restore the graphics state
+            g.Restore(gState);
         }
 
         /// <summary>The angle at which the layer is drawn</summary>
         private int angle = 0;
-        /// <summary>The center of the image at the time when the rotationMatrix was created</summary>
-        private Point center;
-
-        /// <summary>The matrix used for rotating the layer</summary>
-        private Matrix rotationMatrix = new Matrix();
 
         /// <summary>Rotates the layer</summary>
         /// <param name="xCenter">The x center to rotate around</param>
         /// <param name="yCenter">The y center to rotate around</param>
         public override void Rotate(double xCenter, double yCenter)
         {
-            angle += 90;
-            rotationMatrix = new Matrix();
-            center = new Point((int)xCenter, (int)yCenter);
-            rotationMatrix.RotateAt(-angle, center);
+            double localX = location.X - xCenter;
+            double localY = location.Y - yCenter;
+            location.X = (int) (xCenter + localY);
+            location.Y = (int) (yCenter - localX);
+            if((angle -= 90) < 0)
+                angle += 360;
         }
 
         /// <summary>Static property to get the XML name of this type of layer</summary>
@@ -223,6 +230,11 @@ namespace SchetsEditor
             // The text
             writer.WriteStartElement("text");
             writer.WriteString(text);
+            writer.WriteEndElement();
+
+            // The rotation angle
+            writer.WriteStartElement("angle");
+            writer.WriteValue(angle);
             writer.WriteEndElement();
         }
 
@@ -242,6 +254,30 @@ namespace SchetsEditor
                 if(reader.NodeType != XmlNodeType.EndElement || reader.Name != "text")
                     throw new XmlException("Onverwachte 'node', de node '</text>' werd verwacht.");
             }
+            // Read the rotation angle
+            else if(reader.Name == "angle")
+            {
+                reader.Read();
+                if(reader.NodeType == XmlNodeType.Text)
+                {
+                    try
+                    {
+                        angle = reader.ReadContentAsInt();
+                        if(angle % 90 != 0 || angle < 0 || angle > 360)
+                        {
+                            angle = 0;
+                            throw new Exception("Verkeerde draaiingshoek.");
+                        }
+                    }
+                    catch(Exception)
+                    { throw new XmlException("Verkeerd draaiingshoek formaat."); }
+                }
+                else
+                    throw new XmlException("Een 'text node' werd verwacht.");
+
+                if(reader.NodeType != XmlNodeType.EndElement || reader.Name != "angle")
+                    throw new XmlException("Onverwachte 'node', de node '</angle>' werd verwacht.");
+            }
             // Let the base class read its data
             else
                 base.readDataFromXml(reader);
@@ -249,12 +285,25 @@ namespace SchetsEditor
 
         public override bool IsClicked(Point pos)
         {
-            Point[] posArr = { pos };
-            Matrix transformMatrix = new Matrix();
-            transformMatrix.RotateAt(angle, center); // Somehow it has to be rotated at angle instead of -angle like in rotationMatrix...
-            transformMatrix.TransformPoints(posArr);
-            pos = posArr[0];
-            return pos.X > location.X - ALLOWED_ERROR && pos.X < bottomRight.X + ALLOWED_ERROR && pos.Y > location.Y - ALLOWED_ERROR && pos.Y < bottomRight.Y + ALLOWED_ERROR;
+            // Determine the actual coordinates of the top-left corner of the text (taking the rotation in account)
+            Point actualCoords = location;
+            switch(angle)
+            {
+                case 90:
+                    actualCoords = new Point(location.X - boundingSize.Height, location.Y);
+                    break;
+                case 180:
+                    actualCoords = new Point(location.X - boundingSize.Width, location.Y - boundingSize.Height);
+                    break;
+                case 270:
+                    actualCoords = new Point(location.X, location.Y - boundingSize.Width);
+                    break;
+            }
+
+            // Build a bounding rectangle and inflate it with the allowed error margin
+            Rectangle bounding = new Rectangle(actualCoords, angle % 180 == 0 ? boundingSize : new Size(boundingSize.Height, boundingSize.Width));
+            bounding.Inflate(ALLOWED_ERROR, ALLOWED_ERROR);
+            return bounding.Contains(pos);
         }
     }
     

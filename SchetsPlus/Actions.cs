@@ -106,30 +106,38 @@ namespace SchetsEditor
     /// <summary>Represents an action where the entire drawing is rotated 90 degrees</summary>
     class SchetsActionRotate : SchetsAction
     {
-        public SchetsActionRotate() { }
+        /// <summary>The x center at the time of rotating</summary>
+        private double xCenter;
+        /// <summary>The y center at the time of rotating</summary>
+        private double yCenter;
 
-        public override void Undo(SchetsControl s)
+        /// <summary>Constructor</summary>
+        /// <param name="xc">The x center</param>
+        /// <param name="yc">The y center</param>
+        public SchetsActionRotate(double xc, double yc)
         {
-            for (int i = 0; i < 3; i++)
-            {
-                double xCenter = s.Width / 2d;
-                double yCenter = s.Height / 2d;
-                foreach (Layer layer in s.Schets.Layers)
-                {
-                    layer.Rotate(xCenter, yCenter);
-                }
-            }
-            // Three times 90 degrees is the same as one time -90 degrees
+            xCenter = xc;
+            yCenter = yc;
         }
 
+        /// <summary>Undo the action for the given SchetsControl</summary>
+        /// <param name="s">The SchetsControl that the action should be undone for</param>
+        public override void Undo(SchetsControl s)
+        {
+            // Three times 90 degrees is the same as one time -90 degrees
+            for (int i = 0; i < 3; i++)
+            {
+                foreach (Layer layer in s.Schets.Layers)
+                    layer.Rotate(xCenter, yCenter);
+            }
+        }
+
+        /// <summary>Redo the action for the given SchetsControl</summary>
+        /// <param name="s">The SchetsControl that the action should be redone for</param>
         public override void Redo(SchetsControl s)
         {
-            double xCenter = s.Width / 2d;
-            double yCenter = s.Height / 2d;
             foreach (Layer layer in s.Schets.Layers)
-            {
                 layer.Rotate(xCenter, yCenter);
-            }
         }
     }
 }

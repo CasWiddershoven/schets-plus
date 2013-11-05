@@ -98,8 +98,9 @@ namespace SchetsEditor
                     ((LayerText) edittingLayer).Text += c;
                 s.Invalidate();
             }
-            else if (c == '\b')
-            { // If the user pressed backspace
+            else if(c == '\b' && ((LayerText) edittingLayer).Text.Length > 0)
+            {
+                // If the user pressed backspace
                 ((LayerText)edittingLayer).Text = ((LayerText)edittingLayer).Text.Substring(0, ((LayerText)edittingLayer).Text.Length - 1);
                 s.Invalidate();
             }

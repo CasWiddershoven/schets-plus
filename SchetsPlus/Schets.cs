@@ -27,15 +27,13 @@ namespace SchetsEditor
             layers.Clear();
         }
 
-        /// <summary>Rotate the canvas</summary>
-        public void Roteer(int width, int height)
+        /// <summary>Rotate the canvas 90 degrees counter-clockwise around the center of the canvas</summary>
+        /// <param name="xCenter">The horizontal center of the canvas</param>
+        /// <param name="yCenter">The vertical center of the canvas</param>
+        public void Roteer(double xCenter, double yCenter)
         {
-            double xCenter = width / 2d;
-            double yCenter = height / 2d;
             foreach (Layer layer in layers)
-            {
                 layer.Rotate(xCenter, yCenter);
-            }
         }
 
         /// <summary>Saves the image to the given file</summary>
