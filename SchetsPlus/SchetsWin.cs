@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Windows.Forms;
 using System.Reflection;
 using System.Resources;
@@ -281,16 +282,14 @@ namespace SchetsEditor
 
             // Show the dialog
             if (dlg.ShowDialog() == DialogResult.OK)
-            {
                 return dlg.FileName;
-            }
-            else return "";
+            return "";
         }
 
         /// <summary>A function to get a file name using a SaveFileDialog</summary>
         /// <param name="filetype">The type of the file expected by the caller</param>
-        /// <returns>The filename, or an empty string if something went wrong</returns>
-        private string getFileNameSave(string filetype)
+        /// <returns>A tuple containing the filename (or an empty string if something went wrong) and the selected filter index</returns>
+        private Tuple<string, int> getFileNameSave(string filetype)
         {
             // Create an open file dialog
             SaveFileDialog dlg = new SaveFileDialog();
@@ -298,10 +297,8 @@ namespace SchetsEditor
 
             // Show the dialog
             if (dlg.ShowDialog() == DialogResult.OK)
-            {
-                return dlg.FileName;
-            }
-            else return "";
+                return new Tuple<string, int>(dlg.FileName, dlg.FilterIndex);
+            return new Tuple<string, int>("", -1);
         }
         
         // Event handler to load the current drawing from a file
@@ -335,7 +332,7 @@ namespace SchetsEditor
             if (!schetscontrol.ChangesSaved && !askAboutUnsavedChanges())
                 return;
 
-            string filename = getFileNameOpen("Image jpeg (*.jpg)|*.jpg");
+            string filename = getFileNameOpen("Afbeeldingsbestanden (*.jpg;*.jpeg;*.png;*.gif;*.bmp)|*.jpg;*.jpeg;*.png;*.gif;*.bmp");
 
             if (filename != "")
             {
@@ -355,13 +352,13 @@ namespace SchetsEditor
         // Event handler to save the current drawing to a file
         private void saveFile(object obj, EventArgs ea)
         {
-            string filename = getFileNameSave("SchetsPlus schets (*.schets)|*.schets");
+            Tuple<string, int> result = getFileNameSave("SchetsPlus schets (*.schets)|*.schets");
 
-            if(filename != "")
+            if(result.Item1 != "")
             {
                 try
                 {
-                    schetscontrol.Schets.SaveToFile(filename);
+                    schetscontrol.Schets.SaveToFile(result.Item1);
                     schetscontrol.ChangesSaved = true;
                 }
                 catch(Exception e)
@@ -374,13 +371,20 @@ namespace SchetsEditor
         // Event handler to save the current drawing to a bitmap
         private void saveBitmap(object obj, EventArgs ea)
         {
-            string filename = getFileNameSave("Image jpeg (*.jpg)|*.jpg");
+            Tuple<string, int> result = getFileNameSave("PNG Afbeelding (*.png)|*.png|JPEG Afbeelding (*.jpg;*.jpeg)|*.jpg;*.jpeg|GIF Afbeelding (*.gif)|*.gif|Bitmap afbeelding (*.bmp)|*.bmp");
 
-            if (filename != "")
+            if(result.Item1 != "")
             {
                 try
                 {
-                    schetscontrol.Schets.saveBitmap(filename, schetscontrol.Width, schetscontrol.Height);
+                    ImageFormat format = ImageFormat.Png;
+                    switch(result.Item2)
+                    {
+                        case 2: format = ImageFormat.Jpeg; break;
+                        case 3: format = ImageFormat.Gif; break;
+                        case 4: format = ImageFormat.Bmp; break;
+                    }
+                    schetscontrol.Schets.saveBitmap(result.Item1, schetscontrol.Width, schetscontrol.Height, format);
                 }
                 catch (Exception e)
                 {

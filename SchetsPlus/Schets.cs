@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Xml;
 
 namespace SchetsEditor
@@ -79,14 +80,16 @@ namespace SchetsEditor
         /// <param name="filename">The file to save to</param>
         /// <param name="width">The width of the bitmap</param>
         /// <param name="height">The height of the bitmap</param>
-        public void saveBitmap(string filename, int width, int height)
+        /// <param name="format">The file format</param>
+        public void saveBitmap(string filename, int width, int height, ImageFormat format)
         {
-            Bitmap image = new Bitmap(width, height);
+            Bitmap image = new Bitmap(width, height, PixelFormat.Format32bppRgb);
             Graphics g = Graphics.FromImage(image);
+            g.Clear(Color.White);
             this.Teken(g);
             try
             {
-                image.Save(filename);
+                image.Save(filename, format);
             }
             catch (UnauthorizedAccessException)
             { throw new Exception("U heeft niet de juiste rechten om het bestand te openen voor schrijven."); }
@@ -215,7 +218,7 @@ namespace SchetsEditor
                 catch(XmlException e)
                 { throw new Exception(e.Message); }
                 catch(Exception e)
-                { throw new Exception("Er is een onverwachte fout opgetreden! Foutmelding:" + e.Message + "\n" + e.StackTrace); }
+                { throw new Exception("Er is een onverwachte fout opgetreden! Foutmelding:" + e.Message); }
             }
             catch(UnauthorizedAccessException)
             { throw new Exception("U heeft niet de juiste rechten om het bestand te openen voor lezen."); }

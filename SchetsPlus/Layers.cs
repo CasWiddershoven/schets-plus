@@ -267,7 +267,7 @@ namespace SchetsEditor
                         {
                             angle = 0;
                             throw new Exception("Verkeerde draaiingshoek.");
-                        }
+                            }
                     }
                     catch(Exception)
                     { throw new XmlException("Verkeerd draaiingshoek formaat."); }
