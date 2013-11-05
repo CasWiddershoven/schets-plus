@@ -50,13 +50,29 @@ namespace SchetsEditor
         }
         public void VeranderKleur(object obj, EventArgs ea)
         {
-            string kleurNaam = ((ComboBox) obj).Text;
-            penkleur = Color.FromName(kleurNaam);
+            changeColor(((ComboBox) obj).Text);
         }
         public void VeranderKleurViaMenu(object obj, EventArgs ea)
         {
-            string kleurNaam = ((ToolStripMenuItem) obj).Text;
-            penkleur = Color.FromName(kleurNaam);
+            changeColor(((ToolStripMenuItem) obj).Text);
+        }
+
+        /// <summary>The color dialog that's used in this SchetsControl (made it a member variable so it can remember previous selected colors)</summary>
+        private ColorDialog colorDlg = null;
+
+        /// <summary>Changes the current color to the color with the given name</summary>
+        /// <param name="colorName">The (English) name of the color or "Other" to show a color dialog</param>
+        private void changeColor(String colorName)
+        {
+            if(colorName != "Other")
+                penkleur = Color.FromName(colorName);
+            else
+            {
+                if(colorDlg == null)
+                    colorDlg = new ColorDialog();
+                if(colorDlg.ShowDialog() == DialogResult.OK)
+                    penkleur = colorDlg.Color;
+            }
         }
 
         /// <summary>Clears the history, this will also set ChangesSaved to true (since there are no more changes)</summary>

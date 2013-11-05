@@ -59,11 +59,11 @@ namespace SchetsEditor
                                       new TekstTool(),
                                       new GumTool(),
                                       new MoveTool() };
-            String[] deKleuren = { "Black", "Red", "Green", "Blue"
-                                 , "Yellow", "Magenta", "Cyan" 
+            String[] deKleuren = { "Black", "White", "Red", "Green", "Blue"
+                                 , "Yellow", "Magenta", "Cyan", "Other" 
                                  };
 
-            this.ClientSize = new Size(700, 500);
+            this.ClientSize = new Size(780, 575);
             huidigeTool = deTools[0];
 
             schetscontrol = new SchetsControl();
