@@ -179,7 +179,7 @@ namespace SchetsEditor
                                     break;
 
                                 case LayerLine.XML_NAME:
-                                    layer = new LayerLine(new Point(0, 0), new Point(1, 1), Color.Black);
+                                    layer = new LayerLine(new Point(0, 0), new Point(1, 1), 3.0f, Color.Black);
                                     break;
 
                                 case LayerRectFilled.XML_NAME:
@@ -187,7 +187,7 @@ namespace SchetsEditor
                                     break;
 
                                 case LayerRectOpen.XML_NAME:
-                                    layer = new LayerRectOpen(new Point(0, 0), new Point(1, 1), Color.Black);
+                                    layer = new LayerRectOpen(new Point(0, 0), new Point(1, 1), 3.0f, Color.Black);
                                     break;
 
                                 case LayerEllipseFilled.XML_NAME:
@@ -195,11 +195,11 @@ namespace SchetsEditor
                                     break;
 
                                 case LayerEllipseOpen.XML_NAME:
-                                    layer = new LayerEllipseOpen(new Point(0, 0), new Point(1, 1), Color.Black);
+                                    layer = new LayerEllipseOpen(new Point(0, 0), new Point(1, 1), 3.0f, Color.Black);
                                     break;
 
                                 case LayerPath.XML_NAME:
-                                    layer = new LayerPath(new Point(0, 0), Color.Black);
+                                    layer = new LayerPath(new Point(0, 0), 3.0f, Color.Black);
                                     break;
 
                                 case LayerBitmap.XML_NAME:

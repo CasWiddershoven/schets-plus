@@ -418,21 +418,80 @@ namespace SchetsEditor
         }
     }
 
+    /// <summary>Represents a LayerTwoPoint that also has a pen width</summary>
+    abstract class LayerTwoPointPenWidth : LayerTwoPoint
+    {
+        /// <summary>The pen width</summary>
+        protected float penWidth;
+
+        /// <summary>Constructor</summary>
+        /// <param name="loc">The location</param>
+        /// <param name="loc2">The second location</param>
+        /// <param name="w">The pen width</param>
+        /// <param name="col">The color</param>
+        public LayerTwoPointPenWidth(Point loc, Point loc2, float w, Color col) : base(loc, loc2, col)
+        { penWidth = w; }
+
+        /// <summary>Static property to get the XML name of this type of layer</summary>
+        public new const String XML_NAME = "layer-two-point-pen-width";
+        /// <summary>Property to get the XML name of this type of layer</summary>
+        public override String XmlName { get { return XML_NAME; } }
+
+        /// <summary>Writes the data that compose this layer to a XML document.</summary>
+        /// <param name="writer">The XML document to write to</param>
+        protected override void writeDataToXml(XmlWriter writer)
+        {
+            // Call the base method
+            base.writeDataToXml(writer);
+
+            // The pen width
+            writer.WriteStartElement("pen-width");
+            writer.WriteValue(penWidth);
+            writer.WriteEndElement();
+        }
+
+        /// <summary>Called when the current node in the XmlReader should be parsed into data for this layer</summary>
+        /// <param name="reader">The XmlReader that holds the current node</param>
+        protected override void readDataFromXml(XmlReader reader)
+        {
+            // Read the pen width
+            if(reader.Name == "pen-width")
+            {
+                reader.Read();
+                if(reader.NodeType == XmlNodeType.Text)
+                {
+                    try { penWidth = reader.ReadContentAsFloat(); }
+                    catch(Exception)
+                    { throw new XmlException("Verkeerd pen breedte formaat."); }
+                }
+                else
+                    throw new XmlException("Een 'text node' werd verwacht.");
+
+                if(reader.NodeType != XmlNodeType.EndElement || reader.Name != "pen-width")
+                    throw new XmlException("Onverwachte 'node', de node '</pen-width>' werd verwacht.");
+            }
+            // Let the base class read its data
+            else
+                base.readDataFromXml(reader);
+        }
+    }
+
     /// <summary>Represents a layer that contains a straight line</summary>
-    class LayerLine : LayerTwoPoint
+    class LayerLine : LayerTwoPointPenWidth
     {
         /// <summary>Constructor</summary>
         /// <param name="loc">The location</param>
         /// <param name="loc2">The second location</param>
+        /// <param name="w">The pen width</param>
         /// <param name="col">The color</param>
-        public LayerLine(Point loc, Point loc2, Color col) : base(loc, loc2, col)
+        public LayerLine(Point loc, Point loc2, float w, Color col) : base(loc, loc2, w, col)
         { }
 
         /// <summary>Draws the layer</summary>
         /// <param name="g">The graphics object that is to be used to draw the layer</param>
         public override void Draw(Graphics g)
         {
-            Pen pen = new Pen(color, 3);
+            Pen pen = new Pen(color, penWidth);
             pen.StartCap = LineCap.Round;
             pen.EndCap = LineCap.Round;
             g.DrawLine(pen, location, secondLocation);
@@ -476,8 +535,8 @@ namespace SchetsEditor
         public override bool IsClicked(Point pos)
         {
             RectangleF bounds = GetBounds();
-            bounds.Inflate(ALLOWED_ERROR + 1.5f, ALLOWED_ERROR + 1.5f);
-            return bounds.Contains(pos) && DistanceToLine(location, secondLocation, pos) < ALLOWED_ERROR + 1.5;
+            bounds.Inflate(ALLOWED_ERROR + penWidth / 2, ALLOWED_ERROR + penWidth / 2);
+            return bounds.Contains(pos) && DistanceToLine(location, secondLocation, pos) < ALLOWED_ERROR + penWidth / 2;
         }
     }
 
@@ -590,21 +649,22 @@ namespace SchetsEditor
     }
 
     /// <summary>Represents a layer that contains an open rectangle</summary>
-    class LayerRectOpen : LayerTwoPoint
+    class LayerRectOpen : LayerTwoPointPenWidth
     {
         /// <summary>Constructor</summary>
         /// <param name="loc">The location</param>
         /// <param name="loc2">The second location</param>
+        /// <param name="w">The pen width</param>
         /// <param name="col">The color</param>
-        public LayerRectOpen(Point loc, Point loc2, Color col)
-            : base(loc, loc2, col)
+        public LayerRectOpen(Point loc, Point loc2, float w, Color col)
+            : base(loc, loc2, w, col)
         { }
 
         /// <summary>Draws the layer</summary>
         /// <param name="g">The graphics object that is to be used to draw the layer</param>
         public override void Draw(Graphics g)
         {
-            Pen pen = new Pen(color, 3);
+            Pen pen = new Pen(color, penWidth);
             pen.StartCap = LineCap.Round;
             pen.EndCap = LineCap.Round;
             g.DrawRectangle(pen, GetBounds());
@@ -619,11 +679,11 @@ namespace SchetsEditor
         {
             // Check if `pos` is within the border (correct for the border thickness)
             RectangleF bounds = GetBounds();
-            bounds.Inflate(ALLOWED_ERROR + 1.5f, ALLOWED_ERROR + 1.5f);
+            bounds.Inflate(ALLOWED_ERROR + penWidth / 2, ALLOWED_ERROR + penWidth / 2);
             if(!bounds.Contains(pos)) return false;
 
             // Check if `pos` is inside the rectangle (i.e. not on the border)
-            bounds.Inflate(-2 * ALLOWED_ERROR - 3, -2 * ALLOWED_ERROR - 3);
+            bounds.Inflate(-2 * ALLOWED_ERROR - penWidth, -2 * ALLOWED_ERROR - penWidth);
             return !bounds.Contains(pos);
         }
     }
@@ -670,21 +730,22 @@ namespace SchetsEditor
     }
 
     /// <summary>Represents a layer that contains an open ellipse</summary>
-    class LayerEllipseOpen : LayerTwoPoint
+    class LayerEllipseOpen : LayerTwoPointPenWidth
     {
         /// <summary>Constructor</summary>
         /// <param name="loc">The location</param>
         /// <param name="loc2">The second location</param>
+        /// <param name="w">The pen width</param>
         /// <param name="col">The color</param>
-        public LayerEllipseOpen(Point loc, Point loc2, Color col)
-            : base(loc, loc2, col)
+        public LayerEllipseOpen(Point loc, Point loc2, float w, Color col)
+            : base(loc, loc2, w, col)
         { }
 
         /// <summary>Draws the layer</summary>
         /// <param name="g">The graphics object that is to be used to draw the layer</param>
         public override void Draw(Graphics g)
         {
-            Pen pen = new Pen(color, 3);
+            Pen pen = new Pen(color, penWidth);
             pen.StartCap = LineCap.Round;
             pen.EndCap = LineCap.Round;
             g.DrawEllipse(pen, GetBounds());
@@ -702,13 +763,13 @@ namespace SchetsEditor
             double centerY = (secondLocation.Y - location.Y) / 2.0 + location.Y;
 
             // Determine whether `pos` is within the ellipse which we grow by 4.0 in each direction for 2 reasons:
-            //  1. The line thickness of the ellipse is 1.5
+            //  1. The line thickness of the ellipse is penWidth
             //  2. We add ALLOWED_ERROR to allow for a small error
-            if(LayerEllipseFilled.IsInEllipse(GetBounds().Width / 2.0 + 1.5 + ALLOWED_ERROR, GetBounds().Height / 2.0 + 1.5 + ALLOWED_ERROR, pos.X - centerX, pos.Y - centerY))
+            if(LayerEllipseFilled.IsInEllipse(GetBounds().Width / 2.0 + penWidth / 2 + ALLOWED_ERROR, GetBounds().Height / 2.0 + penWidth / 2 + ALLOWED_ERROR, pos.X - centerX, pos.Y - centerY))
             {
-                // If `pos` is within the ellipse after shrinking it by (1.5 + ALLOWED_ERROR) (the same amount as we grew it),
+                // If `pos` is within the ellipse after shrinking it by (penWidth / 2 + ALLOWED_ERROR) (the same amount as we grew it),
                 // then `pos` is not on the border of the ellipse (i.e. not close enough)
-                if(LayerEllipseFilled.IsInEllipse(GetBounds().Width / 2.0 - 1.5 - ALLOWED_ERROR, GetBounds().Height / 2.0 - 1.5 - ALLOWED_ERROR, pos.X - centerX, pos.Y - centerY))
+                if(LayerEllipseFilled.IsInEllipse(GetBounds().Width / 2.0 - penWidth / 2 - ALLOWED_ERROR, GetBounds().Height / 2.0 - penWidth / 2 - ALLOWED_ERROR, pos.X - centerX, pos.Y - centerY))
                     return false;
                 return true;
             }
@@ -721,9 +782,10 @@ namespace SchetsEditor
     {
         /// <summary>Constructor</summary>
         /// <param name="loc">The location</param>
+        /// <param name="w">The pen width</param>
         /// <param name="col">The color</param>
-        public LayerPath(Point loc, Color col) : base(loc, col)
-        { }
+        public LayerPath(Point loc, float w, Color col) : base(loc, col)
+        { penWidth = w; }
 
         /// <summary>All points in the path (`location` is the first point and is not in this list)</summary>
         protected List<Point> points = new List<Point>();
@@ -733,6 +795,9 @@ namespace SchetsEditor
             get { return points; }
             set { points = value; }
         }
+
+        /// <summary>The pen width</summary>
+        protected float penWidth;
 
         /// <summary>Draws the layer</summary>
         /// <param name="g">The graphics object that is to be used to draw the layer</param>
@@ -749,7 +814,7 @@ namespace SchetsEditor
             path.AddLines(pathPoints);
 
             // Draw the path
-            Pen pen = new Pen(color, 3);
+            Pen pen = new Pen(color, penWidth);
             pen.StartCap = LineCap.Round;
             pen.EndCap = LineCap.Round;
             g.DrawPath(pen, path);
@@ -794,6 +859,11 @@ namespace SchetsEditor
             // Call the base method
             base.writeDataToXml(writer);
 
+            // The pen width
+            writer.WriteStartElement("pen-width");
+            writer.WriteValue(penWidth);
+            writer.WriteEndElement();
+
             // The points
             writer.WriteStartElement("points");
             writer.WriteStartAttribute("count");
@@ -817,8 +887,24 @@ namespace SchetsEditor
         /// <param name="reader">The XmlReader that holds the current node</param>
         protected override void readDataFromXml(XmlReader reader)
         {
+            // Read the pen width
+            if(reader.Name == "pen-width")
+            {
+                reader.Read();
+                if(reader.NodeType == XmlNodeType.Text)
+                {
+                    try { penWidth = reader.ReadContentAsFloat(); }
+                    catch(Exception)
+                    { throw new XmlException("Verkeerd pen breedte formaat."); }
+                }
+                else
+                    throw new XmlException("Een 'text node' werd verwacht.");
+
+                if(reader.NodeType != XmlNodeType.EndElement || reader.Name != "pen-width")
+                    throw new XmlException("Onverwachte 'node', de node '</pen-width>' werd verwacht.");
+            }
             // Read the points
-            if(reader.Name == "points")
+            else if(reader.Name == "points")
             {
                 // Read the amount of points
                 int pointCount = 0;
@@ -869,8 +955,8 @@ namespace SchetsEditor
                 RectangleF bounds = new RectangleF(
                     new Point(Math.Min(pathPoints[i].X, pathPoints[i + 1].X), Math.Min(pathPoints[i].Y, pathPoints[i + 1].Y)),
                     new Size(Math.Abs(pathPoints[i].X - pathPoints[i + 1].X), Math.Abs(pathPoints[i].Y - pathPoints[i + 1].Y)));
-                bounds.Inflate(ALLOWED_ERROR + 1.5f, ALLOWED_ERROR + 1.5f);
-                if(bounds.Contains(pos) && LayerLine.DistanceToLine(pathPoints[i], pathPoints[i + 1], pos) < ALLOWED_ERROR + 1.5)
+                bounds.Inflate(ALLOWED_ERROR + penWidth / 2, ALLOWED_ERROR + penWidth / 2);
+                if(bounds.Contains(pos) && LayerLine.DistanceToLine(pathPoints[i], pathPoints[i + 1], pos) < ALLOWED_ERROR + penWidth / 2)
                     return true;
             }
 

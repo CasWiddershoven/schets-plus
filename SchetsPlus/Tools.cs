@@ -47,12 +47,15 @@ namespace SchetsEditor
         protected Point startpunt;
         /// <summary>The color that is to be used with this tool</summary>
         protected Color color;
+        /// <summary>The pen width that is to be used with this tool</summary>
+        protected float penWidth;
         /// <summary>The layer we're currently editting (or null if we're not editting a layer)</summary>
         protected Layer edittingLayer = null;
 
         public virtual void MuisVast(SchetsControl s, Point p)
         {
             color = s.PenKleur;
+            penWidth = s.PenWidth;
             startpunt = p;
             edittingLayer = null;
         }
@@ -187,7 +190,7 @@ namespace SchetsEditor
         public override string ToString() { return "kader"; }
 
         public override LayerTwoPoint CreateLayer(Point p1, Point p2)
-        { return new LayerRectOpen(p1, p2, color); }
+        { return new LayerRectOpen(p1, p2, penWidth, color); }
     }
     
     class VolRechthoekTool : RechthoekTool
@@ -203,7 +206,7 @@ namespace SchetsEditor
         public override string ToString() { return "rondje"; }
 
         public override LayerTwoPoint CreateLayer(Point p1, Point p2)
-        { return new LayerEllipseOpen(p1, p2, color); }
+        { return new LayerEllipseOpen(p1, p2, penWidth, color); }
     }
 
     class FilledEllipseTool : EllipseTool
@@ -219,7 +222,7 @@ namespace SchetsEditor
         public override string ToString() { return "lijn"; }
 
         public override LayerTwoPoint CreateLayer(Point p1, Point p2)
-        { return new LayerLine(p1, p2, color); }
+        { return new LayerLine(p1, p2, penWidth, color); }
     }
 
     class PenTool : StartpuntTool
@@ -230,7 +233,7 @@ namespace SchetsEditor
         {
             if(edittingLayer == null)
             {
-                edittingLayer = new LayerPath(startpunt, color);
+                edittingLayer = new LayerPath(startpunt, penWidth, color);
                 ((LayerPath) edittingLayer).Points.Add(p);
                 s.Schets.Layers.Add(edittingLayer);
             }

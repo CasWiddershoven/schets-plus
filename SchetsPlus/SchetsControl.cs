@@ -23,6 +23,15 @@ namespace SchetsEditor
         /// <summary>Property to get the current color that is to be used by the tools</summary>
         public Color PenKleur { get { return penkleur; } }
 
+        /// <summary>The current pen width that is to be used by the tools</summary>
+        private float penWidth = 3.0f;
+        /// <summary>Property to get the current pen width that is to be used by the tools</summary>
+        public float PenWidth
+        {
+            get { return penWidth; }
+            set { penWidth = Math.Max(1.0f, value); }
+        }
+
         public SchetsControl()
         {
             this.BorderStyle = BorderStyle.Fixed3D;

@@ -22,6 +22,9 @@ namespace SchetsEditor
         /// <summary>The redo button</summary>
         Button buttonRedo;
 
+        /// <summary>A numeric up down that can be used to set the pen width</summary>
+        NumericUpDown upDownPenWidth;
+
         private void veranderAfmeting(object o, EventArgs ea)
         {
             schetscontrol.Size = new Size(this.ClientSize.Width - 70
@@ -169,7 +172,7 @@ namespace SchetsEditor
         private void maakAktieButtons(String[] kleuren)
         {
             paneel = new Panel();
-            paneel.Size = new Size(600, 24);
+            paneel.Size = new Size(740, 24);
             this.Controls.Add(paneel);
 
             Button b; Label l; ComboBox cbb;
@@ -187,11 +190,11 @@ namespace SchetsEditor
 
             l = new Label();
             l.Text = "Penkleur:";
-            l.Location = new Point(180, 3);
+            l.Location = new Point(170, 3);
             l.AutoSize = true;
             paneel.Controls.Add(l);
 
-            cbb = new ComboBox(); cbb.Location = new Point(240, 0);
+            cbb = new ComboBox(); cbb.Location = new Point(230, 0);
             cbb.DropDownStyle = ComboBoxStyle.DropDownList;
             cbb.SelectedValueChanged += schetscontrol.VeranderKleur;
             foreach(string k in kleuren)
@@ -199,17 +202,34 @@ namespace SchetsEditor
             cbb.SelectedIndex = 0;
             paneel.Controls.Add(cbb);
 
+            l = new Label();
+            l.Text = "Penbreedte:";
+            l.Location = new Point(360, 3);
+            l.AutoSize = true;
+            paneel.Controls.Add(l);
+
+            upDownPenWidth = new NumericUpDown();
+            upDownPenWidth.Minimum = Decimal.One;
+            upDownPenWidth.Maximum = Decimal.One * 100;
+            upDownPenWidth.DecimalPlaces = 1;
+            upDownPenWidth.Value = new Decimal(schetscontrol.PenWidth);
+            upDownPenWidth.Increment = new Decimal(0.5);
+            upDownPenWidth.Location = new Point(430, 0);
+            upDownPenWidth.Width = 60;
+            upDownPenWidth.ValueChanged += upDownPenWidth_ValueChanged;
+            paneel.Controls.Add(upDownPenWidth);
+
             // Create the undo and redo buttons
             buttonUndo = new Button();
             buttonUndo.Text = "Undo";
-            buttonUndo.Location = new Point(400, 0);
+            buttonUndo.Location = new Point(510, 0);
             buttonUndo.Click += (object o, EventArgs ea) => { callUndo(); };
             buttonUndo.Enabled = false;
             paneel.Controls.Add(buttonUndo);
 
             buttonRedo = new Button();
             buttonRedo.Text = "Redo";
-            buttonRedo.Location = new Point(490, 0);
+            buttonRedo.Location = new Point(600, 0);
             buttonRedo.Click += (object o, EventArgs ea) => { callRedo(); };
             buttonRedo.Enabled = false;
             paneel.Controls.Add(buttonRedo);
@@ -220,6 +240,9 @@ namespace SchetsEditor
                     buttonRedo.Enabled = canRedo;
                 };
         }
+
+        void upDownPenWidth_ValueChanged(object sender, EventArgs e)
+        { schetscontrol.PenWidth = (float) upDownPenWidth.Value; }
 
         /// <summary>Calls the Undo() method on the SchetsControl</summary>
         private void callUndo()
