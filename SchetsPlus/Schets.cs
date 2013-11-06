@@ -84,11 +84,16 @@ namespace SchetsEditor
         /// <param name="format">The file format</param>
         public void saveBitmap(string filename, int width, int height, ImageFormat format)
         {
+            // Create a bitmap and create a Graphics object associated with it
             Bitmap image = new Bitmap(width, height, PixelFormat.Format32bppRgb);
             Graphics g = Graphics.FromImage(image);
             g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             g.Clear(Color.White);
-            this.Teken(g);
+
+            // Draw the image on the bitmap
+            Teken(g);
+
+            // Save the bitmap
             try
             {
                 image.Save(filename, format);
@@ -105,24 +110,24 @@ namespace SchetsEditor
             { throw new Exception("Een onverwachte fout is opgetreden!"); }
         }
 
-        /// <summary>Loads an image from a bitmap file</summary>
-        public void LoadBitmap(String filename)
+        /// <summary>Loads an image from a bitmap file and adds a layer containing the bitmap</summary>
+        /// <returns>The loaded layer</returns>
+        public Layer LoadBitmap(String filename)
         {
-            layers.Clear();
-            Bitmap image = null;
+            // Note: we do not clear the layers because we're importing a bitmap as a layer
+
+            // Load the bitmap and add it as a layer
             try
             {
-                image = (Bitmap)Bitmap.FromFile(filename);
+                Bitmap image = (Bitmap) Bitmap.FromFile(filename);
+                LayerBitmap layer = new LayerBitmap(new Point(0, 0), image);
+                layers.Add(layer);
+                return layer;
             }
             catch (UnauthorizedAccessException)
             { throw new Exception("U heeft niet de juiste rechten om het bestand te openen voor lezen."); }
             catch (System.IO.DirectoryNotFoundException)
             { throw new Exception("Kon het bestand niet vinden."); }
-            finally
-            {
-                LayerBitmap layer = new LayerBitmap(new Point(0, 0), image);
-                layers.Add(layer);
-            }
         }
         
         /// <summary>Loads the image from the given file</summary>
@@ -173,6 +178,7 @@ namespace SchetsEditor
                             break;
                         else if (reader.NodeType == XmlNodeType.Element && reader.Name.StartsWith("layer"))
                         {
+                            // Determine the layer type
                             Layer layer = null;
                             switch (reader.Name)
                             {
@@ -208,6 +214,8 @@ namespace SchetsEditor
                                     layer = new LayerBitmap(new Point(0, 0), new Bitmap(1,1));
                                     break;
                             }
+
+                            // Read the actual layer contents
                             if (layer != null)
                             {
                                 layer.ReadFromXml(reader);
@@ -220,7 +228,7 @@ namespace SchetsEditor
                 catch(XmlException e)
                 { throw new Exception(e.Message); }
                 catch(Exception e)
-                { throw new Exception("Er is een onverwachte fout opgetreden! Foutmelding:" + e.Message); }
+                { throw new Exception("Er is een onverwachte fout opgetreden! Foutmelding: " + e.Message); }
             }
             catch(UnauthorizedAccessException)
             { throw new Exception("U heeft niet de juiste rechten om het bestand te openen voor lezen."); }

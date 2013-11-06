@@ -34,16 +34,19 @@ namespace SchetsEditor
 
         private void klikToolMenu(object obj, EventArgs ea)
         {
-            this.huidigeTool.ToolChange(schetscontrol);
-            this.huidigeTool = (ISchetsTool) ((ToolStripMenuItem) obj).Tag;
-            this.huidigeTool.ToolSelected(schetscontrol);
+            setTool((ISchetsTool) ((ToolStripMenuItem) obj).Tag);
         }
 
         private void klikToolButton(object obj, EventArgs ea)
         {
-            this.huidigeTool.ToolChange(schetscontrol);
-            this.huidigeTool = (ISchetsTool) ((RadioButton) obj).Tag;
-            this.huidigeTool.ToolSelected(schetscontrol);
+            setTool((ISchetsTool)((RadioButton) obj).Tag);
+        }
+
+        private void setTool(ISchetsTool newTool)
+        {
+            huidigeTool.ToolChange(schetscontrol);
+            huidigeTool = newTool;
+            huidigeTool.ToolSelected(schetscontrol);
         }
 
         private void afsluiten(object obj, EventArgs ea)
@@ -207,6 +210,7 @@ namespace SchetsEditor
             cbb.SelectedIndex = 0;
             paneel.Controls.Add(cbb);
 
+            // Create controls to set the pen width
             l = new Label();
             l.Text = "Penbreedte:";
             l.Location = new Point(360, 3);
@@ -302,7 +306,7 @@ namespace SchetsEditor
 
         /// <summary>A function to get a file name using an OpenFileDialog</summary>
         /// <param name="filetype">The type of the file expected by the caller</param>
-        /// <returns>The filename, or an empty string if something went wrong</returns>
+        /// <returns>The filename, or an empty string if no filename was selected</returns>
         private string getFileNameOpen(string filetype)
         {
             // Create an open file dialog
@@ -317,7 +321,7 @@ namespace SchetsEditor
 
         /// <summary>A function to get a file name using a SaveFileDialog</summary>
         /// <param name="filetype">The type of the file expected by the caller</param>
-        /// <returns>A tuple containing the filename (or an empty string if something went wrong) and the selected filter index</returns>
+        /// <returns>A tuple containing the filename (or an empty string if no filename was selected) and the selected filter index</returns>
         private Tuple<string, int> getFileNameSave(string filetype)
         {
             // Create an open file dialog
@@ -337,8 +341,10 @@ namespace SchetsEditor
             if(!schetscontrol.ChangesSaved && !askAboutUnsavedChanges())
                 return;
 
+            // Ask the user which file that is to be loaded
             string filename = getFileNameOpen("SchetsPlus schets (*.schets)|*.schets");
 
+            // If the user selected a file, we load that file
             if(filename != "")
             {
                 try
@@ -354,21 +360,19 @@ namespace SchetsEditor
             } 
         }
 
-        // Event handler to load the current drawing from a bitmap
+        // Event handler to import a bitmap
         private void loadBitmap(object obj, EventArgs ea)
         {
-            // Notify the user of unsaved changes (if there are any)
-            if (!schetscontrol.ChangesSaved && !askAboutUnsavedChanges())
-                return;
-
+            // Ask the user which file is to be imported
             string filename = getFileNameOpen("Afbeeldingsbestanden (*.jpg;*.jpeg;*.png;*.gif;*.bmp)|*.jpg;*.jpeg;*.png;*.gif;*.bmp");
 
+            // If the filename is not empty, we import the bitmap
             if (filename != "")
             {
                 try
                 {
-                    schetscontrol.Schets.LoadBitmap(filename);
-                    schetscontrol.ClearHistory();
+                    Layer importedLayer = schetscontrol.Schets.LoadBitmap(filename);
+                    schetscontrol.CommitAction(new SchetsActionAddLayer(importedLayer));
                     schetscontrol.Invalidate();
                 }
                 catch (Exception e)
@@ -381,8 +385,10 @@ namespace SchetsEditor
         // Event handler to save the current drawing to a file
         private void saveFile(object obj, EventArgs ea)
         {
+            // Get the save location
             Tuple<string, int> result = getFileNameSave("SchetsPlus schets (*.schets)|*.schets");
 
+            // Save the file, if a save location is selected
             if(result.Item1 != "")
             {
                 try
@@ -400,12 +406,15 @@ namespace SchetsEditor
         // Event handler to save the current drawing to a bitmap
         private void saveBitmap(object obj, EventArgs ea)
         {
+            // Get the export location
             Tuple<string, int> result = getFileNameSave("PNG Afbeelding (*.png)|*.png|JPEG Afbeelding (*.jpg;*.jpeg)|*.jpg;*.jpeg|GIF Afbeelding (*.gif)|*.gif|Bitmap afbeelding (*.bmp)|*.bmp");
 
+            // If a location to export to is selected, we export a bitmap
             if(result.Item1 != "")
             {
                 try
                 {
+                    // Determine which format the user selected
                     ImageFormat format = ImageFormat.Png;
                     switch(result.Item2)
                     {
@@ -413,6 +422,8 @@ namespace SchetsEditor
                         case 3: format = ImageFormat.Gif; break;
                         case 4: format = ImageFormat.Bmp; break;
                     }
+
+                    // Export the bitmap
                     schetscontrol.Schets.saveBitmap(result.Item1, schetscontrol.Width, schetscontrol.Height, format);
                 }
                 catch (Exception e)
@@ -422,9 +433,6 @@ namespace SchetsEditor
             }
         }
 
-        /// <summary>The context menu that is used to change the order of the layers</summary>
-        private ContextMenu ctxMenu = null;
-
         /// <summary>The layer that the context menu is currently active at</summary>
         private Layer ctxActiveLayer = null;
 
@@ -433,18 +441,15 @@ namespace SchetsEditor
         private void showContextMenu(Point pos)
         {
             // If the context menu hasn't been created, create one
-            if(ctxMenu == null)
-            {
-                ctxMenu = new ContextMenu();
-                ctxMenu.MenuItems.Add(new MenuItem("Plaats naar bovenste niveau",
-                    (object o, EventArgs ea) => { schetscontrol.ChangeLayerOrder(ctxActiveLayer, SchetsControl.ReorderActions.SendToTop); }));
-                ctxMenu.MenuItems.Add(new MenuItem("Plaats één niveau naar boven",
-                    (object o, EventArgs ea) => { schetscontrol.ChangeLayerOrder(ctxActiveLayer, SchetsControl.ReorderActions.OneUp); })); ;
-                ctxMenu.MenuItems.Add(new MenuItem("Plaats één niveau naar onder",
-                    (object o, EventArgs ea) => { schetscontrol.ChangeLayerOrder(ctxActiveLayer, SchetsControl.ReorderActions.OneDown); }));
-                ctxMenu.MenuItems.Add(new MenuItem("Plaats naar onderste niveau",
-                    (object o, EventArgs ea) => { schetscontrol.ChangeLayerOrder(ctxActiveLayer, SchetsControl.ReorderActions.SendToBottom); })); ;
-            }
+            ContextMenu ctxMenu = new ContextMenu();
+            ctxMenu.MenuItems.Add(new MenuItem("Plaats naar bovenste niveau",
+                (object o, EventArgs ea) => { schetscontrol.ChangeLayerOrder(ctxActiveLayer, SchetsControl.ReorderActions.SendToTop); }));
+            ctxMenu.MenuItems.Add(new MenuItem("Plaats één niveau naar boven",
+                (object o, EventArgs ea) => { schetscontrol.ChangeLayerOrder(ctxActiveLayer, SchetsControl.ReorderActions.OneUp); })); ;
+            ctxMenu.MenuItems.Add(new MenuItem("Plaats één niveau naar onder",
+                (object o, EventArgs ea) => { schetscontrol.ChangeLayerOrder(ctxActiveLayer, SchetsControl.ReorderActions.OneDown); }));
+            ctxMenu.MenuItems.Add(new MenuItem("Plaats naar onderste niveau",
+                (object o, EventArgs ea) => { schetscontrol.ChangeLayerOrder(ctxActiveLayer, SchetsControl.ReorderActions.SendToBottom); }));
 
             // Determine if a layer was clicked
             // To do so, we loop through the layers from top to bottom

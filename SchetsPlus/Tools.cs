@@ -92,6 +92,8 @@ namespace SchetsEditor
         {
             if (c >= 32)
             {
+                // If we're editting a layer, add the character to the layer
+                // if we're not editting a layer, we create a new text layer containing the character
                 if(edittingLayer == null)
                 {
                     s.Schets.Layers.Add(edittingLayer = new LayerText(this.startpunt, color, new String(c, 1)));
@@ -101,7 +103,7 @@ namespace SchetsEditor
                     ((LayerText) edittingLayer).Text += c;
                 s.Invalidate();
             }
-            else if(c == '\b' && ((LayerText) edittingLayer).Text.Length > 0)
+            else if(c == '\b' && edittingLayer != null && ((LayerText) edittingLayer).Text.Length > 0)
             {
                 // If the user pressed backspace
                 ((LayerText)edittingLayer).Text = ((LayerText)edittingLayer).Text.Substring(0, ((LayerText)edittingLayer).Text.Length - 1);

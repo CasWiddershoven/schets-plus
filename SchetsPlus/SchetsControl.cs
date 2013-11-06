@@ -53,6 +53,8 @@ namespace SchetsEditor
         }
         public void Roteer(object o, EventArgs ea)
         {
+            // Rotate around the center of the canvas (counter-clockwise, 90 degrees)
+            // This way the user can change the way the layers are rotated by (temporarily) changing the canvas size
             CommitAction(new SchetsActionRotate(Width / 2.0, Height / 2.0));
             schets.Roteer(Width / 2.0, Height / 2.0);
             this.Invalidate();
@@ -167,7 +169,7 @@ namespace SchetsEditor
             set { actionSavedPos = value ? actionPos : -2; }
         }
 
-        /// <summary>An enum describing the possible actions for the context menu</summary>
+        /// <summary>An enum describing the possible actions for reordering the layers</summary>
         public enum ReorderActions
         { SendToTop, OneUp, OneDown, SendToBottom }
 

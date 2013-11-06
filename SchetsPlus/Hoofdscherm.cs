@@ -8,6 +8,9 @@ namespace SchetsEditor
     {
         MenuStrip menuStrip;
 
+        /// <summary>The help window</summary>
+        private HelpWindow helpWindow = new HelpWindow();   // Note: this is a field because that way we can make that only 1 HelpWindow is active at the same time
+
         public Hoofdscherm()
         {   this.ClientSize = new Size(900, 700);
             menuStrip = new MenuStrip();
@@ -28,6 +31,7 @@ namespace SchetsEditor
         private void maakHelpMenu()
         {   ToolStripDropDownItem menu;
             menu = new ToolStripMenuItem("Help");
+            menu.DropDownItems.Add("Help", null, (object o, EventArgs ea) => { helpWindow.Show(); } );
             menu.DropDownItems.Add("Over \"Schets\"", null, this.about);
             menuStrip.Items.Add(menu);
         }

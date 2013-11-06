@@ -555,7 +555,15 @@ namespace SchetsEditor
         /// <param name="g">The graphics object that is to be used to draw the layer</param>
         public override void Draw(Graphics g)
         {
+            // Save the graphics state and temporarily turn of anti-aliasing (we don't want that for filled rectangles)
+            GraphicsState state = g.Save();
+            g.SmoothingMode = SmoothingMode.Default;
+
+            // Draw the rectangle
             g.FillRectangle(new SolidBrush(color), GetBounds());
+
+            // Restore the graphics state
+            g.Restore(state);
         }
 
         /// <summary>Static property to get the XML name of this type of layer</summary>
