@@ -635,7 +635,7 @@ namespace SchetsEditor
         /// <param name="reader">The XmlReader that holds the current node</param>
         protected override void readDataFromXml(XmlReader reader)
         {
-            // Read the second location
+            // Read the image data
             if (reader.Name == "image-data")
             {
                 reader.Read();
@@ -644,7 +644,7 @@ namespace SchetsEditor
                     if (reader.NodeType == XmlNodeType.CDATA)
                     {
                         ImageConverter icer = new ImageConverter();
-                        String imageString = reader.ReadContentAsString();
+                        String imageString = reader.ReadContentAsString(); // The image as base64 string
                         byte[] imageData = Convert.FromBase64String(imageString);
                         bitmap = (Bitmap)icer.ConvertFrom(imageData);
                     }
