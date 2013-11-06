@@ -166,5 +166,54 @@ namespace SchetsEditor
             get { return actionPos == actionSavedPos; }
             set { actionSavedPos = value ? actionPos : -2; }
         }
+
+        /// <summary>An enum describing the possible actions for the context menu</summary>
+        public enum ReorderActions
+        { SendToTop, OneUp, OneDown, SendToBottom }
+
+        /// <summary>Change the order of the layers by changing the z-index of the given layer</summary>
+        /// <param name="layer">The layer whose z-index is to be changed</param>
+        /// <param name="action">How the z-index of the layer should be changed</param>
+        public void ChangeLayerOrder(Layer layer, ReorderActions action)
+        {
+            // If no layer is given, stop here
+            if(layer == null) return;
+
+            // Find the current index of the layer and determine it's new index
+            int currIndex = Schets.Layers.IndexOf(layer);
+            int newIndex = currIndex;
+            switch(action)
+            {
+                case ReorderActions.SendToTop:
+                    if(newIndex == Schets.Layers.Count - 1) return;
+                    newIndex = Schets.Layers.Count - 1;
+                    break;
+
+                case ReorderActions.OneUp:
+                    if(newIndex == Schets.Layers.Count - 1) return;
+                    ++newIndex;
+                    break;
+
+                case ReorderActions.OneDown:
+                    if(newIndex == 0) return;
+                    --newIndex;
+                    break;
+
+                case ReorderActions.SendToBottom:
+                    if(newIndex == 0) return;
+                    newIndex = 0;
+                    break;
+            }
+
+            // Change the z-index of the layer
+            Schets.Layers.RemoveAt(currIndex);
+            Schets.Layers.Insert(newIndex, layer);
+
+            // Commit the action
+            CommitAction(new SchetsActionReorder(currIndex, newIndex));
+
+            // Redraw
+            Invalidate();
+        }
     }
 }

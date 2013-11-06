@@ -84,7 +84,12 @@ namespace SchetsEditor
                                        };
             schetscontrol.MouseUp += (object o, MouseEventArgs mea) =>
                                        {
-                                           if(mea.Button != MouseButtons.Left) return;
+                                           if(mea.Button != MouseButtons.Left)
+                                           {
+                                               if(!vast)
+                                                   showContextMenu(mea.Location);
+                                               return;
+                                           }
                                            vast = false;
                                            huidigeTool.MuisLos(schetscontrol, mea.Location);
                                        };
@@ -414,6 +419,56 @@ namespace SchetsEditor
                 {
                     MessageBox.Show("Er is een fout opgetreden bij het opslaan van het bestand.\nFoutboodschap:\n\n" + e.Message, "FOUT!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
+            }
+        }
+
+        /// <summary>The context menu that is used to change the order of the layers</summary>
+        private ContextMenu ctxMenu = null;
+
+        /// <summary>The layer that the context menu is currently active at</summary>
+        private Layer ctxActiveLayer = null;
+
+        /// <summary>Shows a context menu to change the order of the layers</summary>
+        /// <param name="pos">The position to show the context menu</param>
+        private void showContextMenu(Point pos)
+        {
+            // If the context menu hasn't been created, create one
+            if(ctxMenu == null)
+            {
+                ctxMenu = new ContextMenu();
+                ctxMenu.MenuItems.Add(new MenuItem("Plaats naar bovenste niveau",
+                    (object o, EventArgs ea) => { schetscontrol.ChangeLayerOrder(ctxActiveLayer, SchetsControl.ReorderActions.SendToTop); }));
+                ctxMenu.MenuItems.Add(new MenuItem("Plaats één niveau naar boven",
+                    (object o, EventArgs ea) => { schetscontrol.ChangeLayerOrder(ctxActiveLayer, SchetsControl.ReorderActions.OneUp); })); ;
+                ctxMenu.MenuItems.Add(new MenuItem("Plaats één niveau naar onder",
+                    (object o, EventArgs ea) => { schetscontrol.ChangeLayerOrder(ctxActiveLayer, SchetsControl.ReorderActions.OneDown); }));
+                ctxMenu.MenuItems.Add(new MenuItem("Plaats naar onderste niveau",
+                    (object o, EventArgs ea) => { schetscontrol.ChangeLayerOrder(ctxActiveLayer, SchetsControl.ReorderActions.SendToBottom); })); ;
+            }
+
+            // Determine if a layer was clicked
+            // To do so, we loop through the layers from top to bottom
+            ctxActiveLayer = null;
+            int layerIndex = schetscontrol.Schets.Layers.Count;
+            for(; layerIndex != 0; --layerIndex)
+            {
+                // Check if we found a layer at the given position
+                if(schetscontrol.Schets.Layers[layerIndex - 1].IsClicked(pos))
+                {
+                    ctxActiveLayer = schetscontrol.Schets.Layers[layerIndex - 1];
+                    break;
+                }
+            }
+            --layerIndex;
+
+            // If a layer was clicked, we show the context menu
+            if(ctxActiveLayer != null)
+            {
+                ctxMenu.MenuItems[0].Enabled = layerIndex != schetscontrol.Schets.Layers.Count - 1;
+                ctxMenu.MenuItems[1].Enabled = layerIndex != schetscontrol.Schets.Layers.Count - 1;
+                ctxMenu.MenuItems[2].Enabled = layerIndex != 0;
+                ctxMenu.MenuItems[3].Enabled = layerIndex != 0;
+                ctxMenu.Show(this, pos);
             }
         }
     }

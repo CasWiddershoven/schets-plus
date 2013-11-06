@@ -141,7 +141,6 @@ namespace SchetsEditor
         }
     }
 
-
     /// <summary>Represents an action where a layer is moved</summary>
     class SchetsActionMove : SchetsAction
     {
@@ -175,6 +174,42 @@ namespace SchetsEditor
         public override void Redo(SchetsControl s)
         {
             layer.Move(dx, dy);
+        }
+    }
+
+    /// <summary>Represents an action where a layer's z-index is changed</summary>
+    class SchetsActionReorder : SchetsAction
+    {
+        /// <summary>The old index of the layer</summary>
+        private int oldIndex;
+        /// <summary>The new index of the layer</summary>
+        private int newIndex;
+
+        /// <summary>Constructor</summary>
+        /// <param name="oldInd">The old index of the layer</param>
+        /// <param name="newInd">The new index of the layer</param>
+        public SchetsActionReorder(int oldInd, int newInd)
+        {
+            oldIndex = oldInd;
+            newIndex = newInd;
+        }
+
+        /// <summary>Undo the action for the given SchetsControl</summary>
+        /// <param name="s">The SchetsControl that the action should be undone for</param>
+        public override void Undo(SchetsControl s)
+        {
+            Layer tmp = s.Schets.Layers[newIndex];
+            s.Schets.Layers.RemoveAt(newIndex);
+            s.Schets.Layers.Insert(oldIndex, tmp);
+        }
+
+        /// <summary>Redo the action for the given SchetsControl</summary>
+        /// <param name="s">The SchetsControl that the action should be redone for</param>
+        public override void Redo(SchetsControl s)
+        {
+            Layer tmp = s.Schets.Layers[oldIndex];
+            s.Schets.Layers.RemoveAt(oldIndex);
+            s.Schets.Layers.Insert(newIndex, tmp);
         }
     }
 }
