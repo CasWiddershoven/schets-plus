@@ -18,6 +18,7 @@ namespace SchetsEditor
         /// <param name="gr">The graphics object that is to be used to draw the image</param>
         public void Teken(Graphics gr)
         {
+            gr.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             foreach(Layer layer in layers)
                 layer.Draw(gr);
         }
@@ -85,6 +86,7 @@ namespace SchetsEditor
         {
             Bitmap image = new Bitmap(width, height, PixelFormat.Format32bppRgb);
             Graphics g = Graphics.FromImage(image);
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
             g.Clear(Color.White);
             this.Teken(g);
             try
